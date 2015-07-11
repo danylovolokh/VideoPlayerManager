@@ -7,21 +7,25 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.widget.VideoView;
 
-public class Player extends VideoView{
-    public Player(Context context) {
+public class VideoPlayer extends VideoView{
+    public VideoPlayer(Context context) {
         super(context);
     }
 
-    public Player(Context context, AttributeSet attrs) {
+    public VideoPlayer(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public Player(Context context, AttributeSet attrs, int defStyleAttr) {
+    public VideoPlayer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public Player(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public VideoPlayer(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+    }
+
+    public boolean isReadyForNewVideo() {
+        return false;//
     }
 }

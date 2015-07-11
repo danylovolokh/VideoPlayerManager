@@ -4,12 +4,13 @@ import android.view.View;
 import android.widget.VideoView;
 
 import com.volokh.danylo.videolist.R;
+import com.volokh.danylo.videolist.ui.VideoPlayer;
 
 
 public class VideoViewHolder{
-    final VideoView mPlayer;
+    final VideoPlayer mPlayer;
 
     public VideoViewHolder(View view) {
-        mPlayer = (VideoView) view.findViewById(R.id.player);
+        mPlayer = (VideoPlayer) view.findViewById(R.id.player);
     }
 }
