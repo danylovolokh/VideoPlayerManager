@@ -10,10 +10,8 @@ import android.view.Surface;
 
 
 import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
 public class MediaPlayerStatedWrapper {
 
     private static final String TAG = MediaPlayerStatedWrapper.class.getSimpleName();

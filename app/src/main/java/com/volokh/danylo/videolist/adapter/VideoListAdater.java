@@ -40,14 +40,17 @@ public class VideoListAdater extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View resultView = convertView;
-        if(resultView == null){
-            resultView = createView(parent);
+
+        VideoItem videoItem = mList.get(position);
+
+        View resultView;
+        if(convertView == null){
+            resultView = videoItem.createView(parent);
+        } else {
+            resultView = convertView;
         }
-        return resultView;
+
+        return videoItem.update(resultView);
     }
 
-    private View createView(ViewGroup parent) {
-        return LayoutInflater.from(mContext).inflate(R.layout.video_item, parent, false);
-    }
 }
