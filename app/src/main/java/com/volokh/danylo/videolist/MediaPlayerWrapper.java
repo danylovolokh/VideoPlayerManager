@@ -12,9 +12,9 @@ import android.view.Surface;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MediaPlayerStatedWrapper {
+public class MediaPlayerWrapper {
 
-    private static final String TAG = MediaPlayerStatedWrapper.class.getSimpleName();
+    private static final String TAG = MediaPlayerWrapper.class.getSimpleName();
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
 
     public static final int POSITION_UPDATE_NOTIFYING_PERIOD = 100;         // milliseconds
@@ -69,7 +69,7 @@ public class MediaPlayerStatedWrapper {
     private VideoStateListener mVideoStateListener;
 
 
-    public MediaPlayerStatedWrapper() {
+    public MediaPlayerWrapper() {
         mMediaPlayer = new MediaPlayer();
         mState.set(State.IDLE);
         setMediaPlayerListeners();

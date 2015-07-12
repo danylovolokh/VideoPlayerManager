@@ -1,25 +1,22 @@
 package com.volokh.danylo.videolist.adapter;
 
-import android.widget.VideoView;
-
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.adapter.interfaces.SingleVideoPlayerManagerCallback;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
 import com.volokh.danylo.videolist.player.ClearPlayerInstance;
 import com.volokh.danylo.videolist.player.CreateNewPlayerInstance;
-import com.volokh.danylo.videolist.player.PlayNewVideoMessage;
+import com.volokh.danylo.videolist.player.SetDataSourceMessage;
 import com.volokh.danylo.videolist.player.PlayerHandlerThread;
-import com.volokh.danylo.videolist.player.PlayerMessage;
+import com.volokh.danylo.videolist.player.PlayerMessageState;
 import com.volokh.danylo.videolist.player.Prepare;
 import com.volokh.danylo.videolist.player.Release;
 import com.volokh.danylo.videolist.player.Reset;
+import com.volokh.danylo.videolist.player.Start;
 import com.volokh.danylo.videolist.player.Stop;
-import com.volokh.danylo.videolist.player.VideoPlayerState;
 import com.volokh.danylo.videolist.ui.VideoPlayer;
-import com.volokh.danylo.videolist.utils.HandlerThreadExtension;
 import com.volokh.danylo.videolist.utils.Logger;
-import com.volokh.danylo.videolist.visitors.Visitor;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SingleVideoPlayerManager implements VideoPlayerManager, SingleVideoPlayerManagerCallback {
@@ -29,7 +26,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, SingleVideo
 
     private final PlayerHandlerThread mPlayerHandler = new PlayerHandlerThread(TAG);
     private final AtomicReference<VideoPlayer> mCurrentPlayer = new AtomicReference<>();
-    private final AtomicReference<VideoPlayerState> mCurrentPlayerState = new AtomicReference<>();
+    private final AtomicReference<PlayerMessageState> mCurrentPlayerState = new AtomicReference<>();
 
     @Override
     public void playNewVideo(VideoPlayer videoPlayer, String videoUrl) {
@@ -37,43 +34,130 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, SingleVideo
 
         synchronized (mCurrentPlayerState){
 
+            mPlayerHandler.pauseQueueProcessing(TAG);
+            if(SHOW_LOGS) Logger.v(TAG, "playNewVideo, videoPlayer " + videoPlayer + ", videoUrl " + videoUrl + ", mCurrentPlayerState " + mCurrentPlayerState);
+
+            mPlayerHandler.clearAllPendingMessages(TAG);
+
             switch (mCurrentPlayerState.get()){
+                case IDLE:
+                    break;
+                case INITIALIZED:
+                case PREPARING:
+                case PREPARED:
+                case STARTING:
+                case STARTED:
+                case PAUSING:
+                case PAUSED:
+                case PLAYBACK_COMPLETED:
+
+                    mPlayerHandler.addMessages(Arrays.asList(
+                            new Stop(videoPlayer, videoUrl),
+                            new Reset(videoPlayer, videoUrl),
+                            new Release(videoPlayer, videoUrl),
+                            new ClearPlayerInstance(videoPlayer, videoUrl),
+                            new CreateNewPlayerInstance(videoPlayer, videoUrl),
+                            new SetDataSourceMessage(videoPlayer, videoUrl),
+                            new Prepare(videoPlayer, videoUrl),
+                            new Start(videoPlayer, videoUrl)
+                            ));
+                    break;
+                case STOPPING:
+                case STOPPED:
+                    mPlayerHandler.addMessage(new Stop(videoPlayer, videoUrl));
+                    //FALL-THROUGH
+
+                case RESETTING:
+                case RESET:
+                    mPlayerHandler.addMessage(new Reset(videoPlayer, videoUrl));
+                    //FALL-THROUGH
+
+                case RELEASING:
+                case RELEASED:
+                    mPlayerHandler.addMessage(new ClearPlayerInstance(videoPlayer, videoUrl));
+                    //FALL-THROUGH
+
+                case CLEARING_PLAYER_INSTANCE:
+                case PLAYER_INSTANCE_CLEARED:
+                    mPlayerHandler.addMessage(new CreateNewPlayerInstance(videoPlayer, videoUrl));
+                    //FALL-THROUGH
+
+                case CREATING_PLAYER_INSTANCE:
+                case PLAYER_INSTANCE_CREATED:
+                    mPlayerHandler.addMessages(Arrays.asList(
+                            new SetDataSourceMessage(videoPlayer, videoUrl),
+                            new Prepare(videoPlayer, videoUrl),
+                            new Start(videoPlayer, videoUrl)
+                    ));
+                    break;
+
+                case SETTING_VIDEO_SOURCE:
+                    throw new RuntimeException("unhandled " + mCurrentPlayerState);
+
+                case VIDEO_SOURCE_SET:
+                    throw new RuntimeException("unhandled " + mCurrentPlayerState);
+
+                case END:
+                    throw new RuntimeException("unhandled " + mCurrentPlayerState);
+
+                case ERROR:
+                    throw new RuntimeException("unhandled " + mCurrentPlayerState);
 
             }
-                if(mPlayerHandler.isPlaying()){
-                    mPlayerHandler.addMessage(new Stop(videoPlayer, videoUrl));
-                    mPlayerHandler.addMessage(new Reset(videoPlayer, videoUrl));
-                    mPlayerHandler.addMessage(new Release(videoPlayer, videoUrl));
-                    mPlayerHandler.addMessage(new ClearPlayerInstance(videoPlayer, videoUrl));
-                    mPlayerHandler.addMessage(new CreateNewPlayerInstance(videoPlayer, videoUrl));
-                    mPlayerHandler.addMessage(new Prepare(videoPlayer, videoUrl));
-                    mPlayerHandler.addMessage(new PlayNewVideoMessage(videoPlayer, videoUrl));
-                } else {
-                    PlayerMessage pendingMessage = mPlayerHandler.getPendingMessage();
-                    if(mPlayerHandler.isPendingPlayBack()){
-                        if(SHOW_LOGS) Logger.v(TAG, "Pending playback, do nothing");
-                    }
-                }
-            mPlayerHandler.addMessage(new Prepare(videoPlayer, videoUrl));
-            mPlayerHandler.addMessage(new PlayNewVideoMessage(videoPlayer, videoUrl));
+            mPlayerHandler.resumeQueueProcessing(TAG);
         }
 
         if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayer + ", videoUrl " + videoUrl);
     }
 
-    public boolean isReadyForNewVideo() {
-        boolean isReadyForNewVideo = mCurrentPlayer.isReadyForNewVideo();
-        if (SHOW_LOGS) Logger.v(mTag, "isReadyForNewVideo, " + isReadyForNewVideo);
-
-        return isReadyForNewVideo;
+    private boolean isStopping() {
+        boolean result = false;
+        switch (mCurrentPlayerState.get()){
+            case IDLE:
+                break;
+            case INITIALIZED:
+            case PREPARING:
+            case PREPARED:
+            case STARTING:
+            case STARTED:
+            case PAUSING:
+            case PAUSED:
+            case STOPPED:
+            case PLAYBACK_COMPLETED:
+            case END:
+            case ERROR:
+                result = false;
+                break;
+            case STOPPING:
+                result = true;
+                break;
+        }
+        return result;
     }
 
-    public boolean isPendingPlayBack() {
-        PlayerMessage headMessage = mPlayerMessagesQueue.peek();
-        Visitor pendingPlaybackCheckVisitor =
-        if (SHOW_LOGS) Logger.v(mTag, "isPendingPlayBack, " + isPlaying);
-
-        return false;
+    private boolean isInPlayback() {
+        boolean result = false;
+        switch (mCurrentPlayerState.get()){
+            case IDLE:
+                break;
+            case INITIALIZED:
+            case PREPARING:
+            case PREPARED:
+            case STARTING:
+            case STARTED:
+                result = true;
+                break;
+            case PAUSING:
+            case PAUSED:
+            case STOPPING:
+            case STOPPED:
+            case PLAYBACK_COMPLETED:
+            case END:
+            case ERROR:
+                result = false;
+                break;
+        }
+        return result;
     }
 
     @Override
@@ -87,11 +171,11 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, SingleVideo
     }
 
     @Override
-    public void setCurrentVideoPlayerState(VideoPlayer currentVideoPlayer, VideoPlayerState videoPlayerState) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> setCurrentVideoPlayerState, currentVideoPlayer " + currentVideoPlayer + ", videoPlayerState " + videoPlayerState);
+    public void setCurrentVideoPlayerState(VideoPlayer currentVideoPlayer, PlayerMessageState playerMessageState) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> setCurrentVideoPlayerState, currentVideoPlayer " + currentVideoPlayer + ", playerMessageState " + playerMessageState);
 
         synchronized (mCurrentPlayerState){
-            mCurrentPlayerState.set(videoPlayerState);
+            mCurrentPlayerState.set(playerMessageState);
         }
         if(SHOW_LOGS) Logger.v(TAG, "<< setCurrentVideoPlayerState");
     }
