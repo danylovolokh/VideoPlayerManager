@@ -1,14 +1,26 @@
 package com.volokh.danylo.videolist.player;
 
-import android.widget.VideoView;
+import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
+import com.volokh.danylo.videolist.ui.VideoPlayer;
 
-public class Release implements PlayerMessage {
-    public Release(VideoView videoView, String videoUrl) {
+public class Release extends PlayerMessage {
 
+    public Release(VideoPlayer videoPlayer, VideoPlayerManagerCallback callback) {
+        super(videoPlayer, callback);
     }
 
     @Override
-    public void run() {
+    protected void performAction(VideoPlayer currentPlayer) {
+        currentPlayer.release();
+    }
 
+    @Override
+    protected PlayerMessageState stateBefore() {
+        return PlayerMessageState.RELEASING;
+    }
+
+    @Override
+    protected PlayerMessageState stateAfter() {
+        return PlayerMessageState.RELEASED;
     }
 }

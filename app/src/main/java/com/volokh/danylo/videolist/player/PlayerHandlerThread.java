@@ -39,10 +39,9 @@ public class PlayerHandlerThread {
 
                     if (mPlayerMessagesQueue.isEmpty()) {
                         try {
-                            if (SHOW_LOGS)
-                                Logger.v(mTag, "queue is empty, wait for new messages");
+                            if (SHOW_LOGS) Logger.v(mTag, "queue is empty, wait for new messages");
 
-                            mPlayerMessagesQueue.wait();
+                            mQueueLock.wait(mTag);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                             throw new RuntimeException("InterruptedException");
@@ -53,9 +52,9 @@ public class PlayerHandlerThread {
                     mQueueLock.unlock(mTag);
 
                     if (SHOW_LOGS) Logger.v(mTag, "run, mLastMessage " + mLastMessage);
-                    mLastMessage.run();
+                    mLastMessage.runMessage();
 
-                } while (mTerminated.get());
+                } while (!mTerminated.get());
 
             }
         });
@@ -67,7 +66,7 @@ public class PlayerHandlerThread {
         mQueueLock.lock(mTag);
 
         mPlayerMessagesQueue.add(message);
-        mPlayerMessagesQueue.notify();
+        mQueueLock.notify(mTag);
 
         if (SHOW_LOGS) Logger.v(mTag, "<< addMessage, unlock " + message);
         mQueueLock.unlock(mTag);
@@ -83,7 +82,7 @@ public class PlayerHandlerThread {
         mQueueLock.lock(mTag);
 
         mPlayerMessagesQueue.addAll(messages);
-        mPlayerMessagesQueue.notify();
+        mQueueLock.notify(mTag);
 
         if (SHOW_LOGS) Logger.v(mTag, "<< addMessages, unlock " + messages);
         mQueueLock.unlock(mTag);

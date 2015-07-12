@@ -1,13 +1,25 @@
 package com.volokh.danylo.videolist.player;
 
-import android.widget.VideoView;
+import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
+import com.volokh.danylo.videolist.ui.VideoPlayer;
 
-public class Stop implements PlayerMessage {
-    public Stop(VideoView videoView, String videoUrl) {
+public class Stop extends PlayerMessage {
+    public Stop(VideoPlayer videoView, VideoPlayerManagerCallback callback) {
+        super(videoView, callback);
     }
 
     @Override
-    public void run() {
+    protected void performAction(VideoPlayer currentPlayer) {
+        currentPlayer.stopPlayback();
+    }
 
+    @Override
+    protected PlayerMessageState stateBefore() {
+        return PlayerMessageState.STOPPING;
+    }
+
+    @Override
+    protected PlayerMessageState stateAfter() {
+        return PlayerMessageState.STOPPED;
     }
 }

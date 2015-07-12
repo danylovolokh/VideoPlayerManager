@@ -1,20 +1,17 @@
 package com.volokh.danylo.videolist.adapter;
 
 import android.content.Context;
-import android.database.DataSetObserver;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ListAdapter;
 
-import com.volokh.danylo.videolist.R;
-import com.volokh.danylo.videolist.model.Video;
+import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
 
 import java.util.List;
 
 public class VideoListAdater extends BaseAdapter {
 
+    private final VideoPlayerManager mVideoPlayerManager = new SingleVideoPlayerManager();
     private final List<VideoItem> mList;
     private final Context mContext;
 
@@ -50,7 +47,7 @@ public class VideoListAdater extends BaseAdapter {
             resultView = convertView;
         }
 
-        return videoItem.update(resultView);
+        return videoItem.update(resultView, mVideoPlayerManager);
     }
 
 }

@@ -1,13 +1,26 @@
 package com.volokh.danylo.videolist.player;
 
-import android.widget.VideoView;
+import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
+import com.volokh.danylo.videolist.ui.VideoPlayer;
 
-public class ClearPlayerInstance implements PlayerMessage {
-    public ClearPlayerInstance(VideoView videoView, String videoUrl) {
+public class ClearPlayerInstance extends PlayerMessage {
+
+    public ClearPlayerInstance(VideoPlayer videoPlayer, VideoPlayerManagerCallback callback) {
+        super(videoPlayer, callback);
     }
 
     @Override
-    public void run() {
+    protected void performAction(VideoPlayer currentPlayer) {
+        currentPlayer.clearPlayerInstance();
+    }
 
+    @Override
+    protected PlayerMessageState stateBefore() {
+        return PlayerMessageState.CLEARING_PLAYER_INSTANCE;
+    }
+
+    @Override
+    protected PlayerMessageState stateAfter() {
+        return PlayerMessageState.PLAYER_INSTANCE_CLEARED;
     }
 }

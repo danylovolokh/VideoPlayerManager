@@ -1,19 +1,29 @@
 package com.volokh.danylo.videolist.player;
 
-import android.widget.VideoView;
+import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
+import com.volokh.danylo.videolist.ui.VideoPlayer;
 
-public class SetDataSourceMessage implements PlayerMessage{
+public class SetDataSourceMessage extends PlayerMessage{
 
-    private final VideoView mVideoView;
     private final String mVideoUrl;
 
-    public SetDataSourceMessage(VideoView videoView, String videoUrl) {
-        mVideoView = videoView;
+    public SetDataSourceMessage(VideoPlayer videoPlayer, String videoUrl, VideoPlayerManagerCallback callback) {
+        super(videoPlayer, callback);
         mVideoUrl = videoUrl;
     }
 
     @Override
-    public void run() {
+    protected void performAction(VideoPlayer currentPlayer) {
+        currentPlayer.setVideoPath(mVideoUrl);
+    }
 
+    @Override
+    protected PlayerMessageState stateBefore() {
+        return PlayerMessageState.SETTING_DATA_SOURCE;
+    }
+
+    @Override
+    protected PlayerMessageState stateAfter() {
+        return PlayerMessageState.DATA_SOURCE_SET;
     }
 }

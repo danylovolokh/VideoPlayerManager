@@ -25,7 +25,19 @@ public class VideoPlayer extends VideoView{
         super(context, attrs, defStyleAttr, defStyleRes);
     }
 
-    public boolean isReadyForNewVideo() {
-        return false;//
+    public void reset() {
+        stopPlayback();// TODO: change
+    }
+
+    public void release() {
+        stopPlayback();// TODO: change
+    }
+
+    public void clearPlayerInstance() {
+        stopPlayback();// TODO: change
+    }
+
+    public void createNewPlayerInstance() {
+        // TODO: implement
     }
 }
