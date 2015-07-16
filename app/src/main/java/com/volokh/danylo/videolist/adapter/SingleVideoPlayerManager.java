@@ -125,6 +125,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         if(SHOW_LOGS) Logger.v(TAG, "startPlayback");
 
         mPlayerHandler.addMessages(Arrays.asList(
+                new CreateNewPlayerInstance(videoPlayer, this),
                 new SetDataSourceMessage(videoPlayer, videoUrl, this),
                 new Prepare(videoPlayer, videoUrl, this),
                 new Start(videoPlayer, videoUrl, this)
@@ -132,7 +133,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     private void setNewViewForPlayback(VideoPlayer videoPlayer) {
-        if(SHOW_LOGS) Logger.v(TAG, "setNewViewForPlayback");
+        if(SHOW_LOGS) Logger.v(TAG, "setNewViewForPlayback, videoPlayer" + videoPlayer);
         mPlayerHandler.addMessage(new SetNewViewForPlayback(videoPlayer, this));
     }
 
@@ -170,8 +171,8 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
             case RELEASING:
             case RELEASED:
                 mPlayerHandler.addMessage(new ClearPlayerInstance(mCurrentPlayer.get(), this));
-                //FALL-THROUGH
 
+                break;
             case END:
             case ERROR:
                 throw new RuntimeException("unhandled " + mCurrentPlayerState);
@@ -230,12 +231,12 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
 
     @Override
     public void setVideoPlayer(VideoPlayer videoPlayer) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> setVideoPlayer");
-
-        synchronized (mCurrentPlayer){
-            mCurrentPlayer.set(videoPlayer);
-        }
-        if(SHOW_LOGS) Logger.v(TAG, "<< setVideoPlayer");
+//        if(SHOW_LOGS) Logger.v(TAG, ">> setVideoPlayer");
+//
+//        synchronized (mCurrentPlayer){
+//            mCurrentPlayer.set(videoPlayer);
+//        }
+//        if(SHOW_LOGS) Logger.v(TAG, "<< setVideoPlayer");
     }
 
     @Override
