@@ -15,7 +15,7 @@ public class Prepare extends PlayerMessage{
     @Override
     protected void performAction(VideoPlayer currentPlayer) {
         // TODO: check current state if not error
-//        currentPlayer.prepare();
+        currentPlayer.prepare();
     }
 
     @Override

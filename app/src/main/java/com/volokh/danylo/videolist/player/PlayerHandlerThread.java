@@ -18,12 +18,12 @@ public class PlayerHandlerThread {
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
 
     private VideoPlayer mCurrentPlayer;
-    private final Queue<PlayerMessage> mPlayerMessagesQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<Message> mPlayerMessagesQueue = new ConcurrentLinkedQueue<>();
     private final PlayerQueueLock mQueueLock = new PlayerQueueLock();
     private final Executor mQueueProcessingThread = Executors.newSingleThreadExecutor();
 
     private AtomicBoolean mTerminated = new AtomicBoolean(false);
-    private PlayerMessage mLastMessage;
+    private Message mLastMessage;
 
     public PlayerHandlerThread(String tag) {
         mTag = getClass().getSimpleName() + " " + tag;
@@ -60,7 +60,7 @@ public class PlayerHandlerThread {
         });
     }
 
-    public void addMessage(PlayerMessage message){
+    public void addMessage(Message message){
 
         if (SHOW_LOGS) Logger.v(mTag, ">> addMessage, lock " + message);
         mQueueLock.lock(mTag);

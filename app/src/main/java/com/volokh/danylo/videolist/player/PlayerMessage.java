@@ -5,7 +5,7 @@ import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback
 import com.volokh.danylo.videolist.ui.VideoPlayer;
 import com.volokh.danylo.videolist.utils.Logger;
 
-public abstract class PlayerMessage {
+public abstract class PlayerMessage implements Message{
 
     private static final String TAG = PlayerMessage.class.getSimpleName();
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;

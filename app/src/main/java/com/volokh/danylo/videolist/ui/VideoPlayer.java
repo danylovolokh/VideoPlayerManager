@@ -7,18 +7,16 @@ import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.os.Build;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.TextureView;
-import android.view.View;
 
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.MediaPlayerWrapper;
 import com.volokh.danylo.videolist.utils.Logger;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VideoPlayer extends TextureView implements TextureView.SurfaceTextureListener{
 
@@ -44,11 +42,6 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
 
     private float mVideoRotation = 0f;
 
-    private boolean mIsViewAvailable;
-    private boolean mPlayAsReady;
-
-    private AtomicBoolean mIsVideoStartedCalled = new AtomicBoolean(false);
-
     private ScaleType mScaleType;
 
     private String mDataSource;
@@ -58,6 +51,8 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     private MediaPlayerWrapper.VideoStateListener mVideoStateListener;
 
     private final Matrix mTransformMatrix = new Matrix();
+
+    private final ReadyForPlaybackIndicator mReadyForPlaybackIndicator = new ReadyForPlaybackIndicator();
 
     public enum ScaleType {
         CENTER_CROP, TOP, BOTTOM, FILL
@@ -84,21 +79,83 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         initView();
     }
 
+    private void checkThread() {
+        if(Looper.myLooper() == Looper.getMainLooper()){
+            throw new RuntimeException("not in main thread");
+        }
+    }
+
     public void reset() {
+        checkThread();
         mMediaPlayer.reset();
     }
 
     public void release() {
+        checkThread();
         mMediaPlayer.release();
     }
 
     public void clearPlayerInstance() {
+        checkThread();
         mMediaPlayer = null;
     }
 
     public void createNewPlayerInstance() {
+        checkThread();
         mMediaPlayer = new MediaPlayerWrapper();
+
+        synchronized (mReadyForPlaybackIndicator){
+            if(mReadyForPlaybackIndicator.isSurfaceTextureAvailable()){
+                mMediaPlayer.setSurfaceTexture(getSurfaceTexture());
+            }
+        }
         setMediaPlayerListeners();
+    }
+
+    public void prepare() {
+        checkThread();
+        mMediaPlayer.prepare();
+    }
+
+    public void stop() {
+        checkThread();
+        mMediaPlayer.stop();
+    }
+
+    public boolean canStartPlayback(){
+        return isAvailable() && isVideoSizeAvailable();
+    }
+
+    public boolean isFaled(){
+        return false; // TODO:
+    }
+
+    private boolean isVideoSizeAvailable() {
+        boolean isVideoSizeAvailable = mVideoHeight != null && mVideoWidth != null;
+        if (SHOW_LOGS) Logger.v(TAG, "isVideoSizeAvailable " + isVideoSizeAvailable);
+        return isVideoSizeAvailable;
+    }
+
+    public void start(){
+        if (SHOW_LOGS) Logger.v(TAG, ">> start");
+        synchronized (mReadyForPlaybackIndicator){
+            if(mReadyForPlaybackIndicator.isReadyForPlayback()){
+                mMediaPlayer.start();
+            } else {
+                if (SHOW_LOGS) Logger.v(TAG, "start, >> wait");
+
+                try {
+                    mReadyForPlaybackIndicator.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (SHOW_LOGS) Logger.v(TAG, "start, << wait");
+
+                mMediaPlayer.start();
+            }
+        }
+        if (SHOW_LOGS) Logger.v(TAG, "<< start");
     }
 
     private void initView() {
@@ -113,7 +170,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
 
     public void updateTextureViewSize() {
         if (mVideoWidth == null || mVideoHeight == null) {
-            return;
+            throw new RuntimeException("null size");
         }
 
         float viewWidth = getMeasuredWidth();
@@ -123,8 +180,8 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         float videoHeight = mVideoHeight;
 
         if (SHOW_LOGS) {
-            Log.v(TAG, "updateTextureViewSize, mVideoWidth " + mVideoWidth + ", mVideoHeight " + mVideoHeight + ", mScaleType " + mScaleType);
-            Log.v(TAG, "updateTextureViewSize, viewWidth " + viewWidth + ", viewHeight " + viewHeight);
+            Logger.v(TAG, "updateTextureViewSize, mVideoWidth " + mVideoWidth + ", mVideoHeight " + mVideoHeight + ", mScaleType " + mScaleType);
+            Logger.v(TAG, "updateTextureViewSize, viewWidth " + viewWidth + ", viewHeight " + viewHeight);
         }
 
         float scaleX = 1.0f;
@@ -156,7 +213,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         }
 
         if (SHOW_LOGS) {
-            Log.v(TAG, "updateTextureViewSize, scaleX " + scaleX + ", scaleY " + scaleY);
+            Logger.v(TAG, "updateTextureViewSize, scaleX " + scaleX + ", scaleY " + scaleY);
         }
 
         // Calculate pivot points, in our case crop from center
@@ -202,10 +259,6 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
                 break;
         }
 
-        if (SHOW_LOGS) {
-            Log.v(TAG, "updateTextureViewSize, fitCoef " + fitCoef + ", manualCoef " + manualCoef);
-        }
-
         mVideoScaleX = fitCoef * scaleX;
         mVideoScaleY = fitCoef * scaleY;
 
@@ -217,7 +270,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
 
     private void updateMatrixScaleRotate() {
         if (SHOW_LOGS) {
-            Log.d(TAG, "updateMatrixScaleRotate, mVideoRotation " + mVideoRotation + ", mVideoScaleMultiplier " + mVideoScaleMultiplier + ", mPivotPointX " + mPivotPointX + ", mPivotPointY " + mPivotPointY);
+            Logger.d(TAG, "updateMatrixScaleRotate, mVideoRotation " + mVideoRotation + ", mVideoScaleMultiplier " + mVideoScaleMultiplier + ", mPivotPointX " + mPivotPointX + ", mPivotPointY " + mPivotPointY);
         }
 
         mTransformMatrix.reset();
@@ -228,7 +281,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
 
     private void updateMatrixTranslate() {
         if (SHOW_LOGS) {
-            Log.d(TAG, "updateMatrixTranslate, mVideoX " + mVideoX + ", mVideoY " + mVideoY);
+            Logger.d(TAG, "updateMatrixTranslate, mVideoX " + mVideoX + ", mVideoY " + mVideoY);
         }
 
         float scaleX = mVideoScaleX * mVideoScaleMultiplier;
@@ -247,12 +300,12 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         int scaledVideoHeight = getScaledVideoHeight();
 
         if (SHOW_LOGS)
-            Log.d(TAG, "centerVideo, measuredWidth " + measuredWidth + ", measuredHeight " + measuredHeight + ", scaledVideoWidth " + scaledVideoWidth + ", scaledVideoHeight " + scaledVideoHeight);
+            Logger.d(TAG, "centerVideo, measuredWidth " + measuredWidth + ", measuredHeight " + measuredHeight + ", scaledVideoWidth " + scaledVideoWidth + ", scaledVideoHeight " + scaledVideoHeight);
 
         mVideoX = 0;
         mVideoY = 0;
 
-        if (SHOW_LOGS) Log.d(TAG, "centerVideo, mVideoX " + mVideoX + ", mVideoY " + mVideoY);
+        if (SHOW_LOGS) Logger.d(TAG, "centerVideo, mVideoX " + mVideoX + ", mVideoY " + mVideoY);
 
         updateMatrixScaleRotate();
     }
@@ -261,7 +314,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         if (SHOW_LOGS) {
-            Log.v(TAG, "onMeasure, mVideoWidth " + mVideoWidth + ", mVideoHeight " + mVideoHeight);
+            Logger.v(TAG, "onMeasure, mVideoWidth " + mVideoWidth + ", mVideoHeight " + mVideoHeight);
         }
 
         if (mVideoWidth != null && mVideoHeight != null) {
@@ -271,7 +324,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
 
     public void setMediaPlayer(MediaPlayerWrapper player, String dataSource) {
         if (SHOW_LOGS)
-            Log.v(TAG, "setMediaPlayer, player " + player + ", dataSource " + dataSource + ", this " + this);
+            Logger.v(TAG, "setMediaPlayer, player " + player + ", dataSource " + dataSource + ", this " + this);
 
         if (player != null) {
             mMediaPlayer.setListener(null);
@@ -290,52 +343,21 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         }
     }
 
-    public MediaPlayerStatedWrapper getMediaPlayer() {
-        return mMediaPlayer;
-    }
-
-    public void updateMediaPlayer() {
-        if (SHOW_LOGS)
-            Log.v(TAG, "updateMediaPlayer, state " + mMediaPlayer.getState() + ", this " + this);
-
-        setMediaPlayer(mMediaPlayer, mDataSource);
-        if (mMediaPlayer.getState() == State.ERROR) {
-            setDataSource(mDataSource);
-        }
-    }
-
-    public boolean isError() {
-        return mMediaPlayer.getState() == State.ERROR;
-    }
-
-    /**
-     * @see MediaPlayer#setDataSource(String)
-     */
     public void setDataSource(String path) {
-        if (SHOW_LOGS) Log.v(TAG, "setDataSource, path " + path + ", this " + this);
+        checkThread();
 
-        if (mMediaPlayer.getState() != State.UNINITIALIZED) {
-            initPlayer();
-        }
+        if (SHOW_LOGS) Logger.v(TAG, "setDataSource, path " + path + ", this " + this);
 
         try {
             mMediaPlayer.setDataSource(path);
 
-            // if it's not a restart but a new source, clear restart attempts info
-            if (!path.equals(mDataSource)) {
-                mRestartAttempt = 0;
-            }
-
             mDataSource = path;
-            prepare();
         } catch (IOException e) {
-            Log.d(TAG, e.getMessage());
+            Logger.d(TAG, e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
-    public String getDataSource() {
-        return mDataSource;
-    }
 
     public void setOnVideoStateChangedListener(MediaPlayerWrapper.VideoStateListener listener) {
         mVideoStateListener = listener;
@@ -346,7 +368,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         mPlaybackStartedListener = listener;
     }
 
-    public void setMediaPlayerListener(MediaPlayerStatedWrapper.MediaPlayerListener listener) {
+    public void setMediaPlayerListener(MediaPlayerWrapper.MediaPlayerListener listener) {
         mMediaPlayerListener = listener;
     }
 
@@ -354,128 +376,61 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         mMediaPlayer.setListener(new MediaPlayerWrapper.MediaPlayerListener() {
             @Override
             public void onVideoSizeChanged(int width, int height) {
+                if (SHOW_LOGS)
+                    Logger.v(TAG, "onVideoSizeChanged, width " + width + ", height " + height);
+
                 mVideoWidth = width;
                 mVideoHeight = height;
-                updateTextureViewSize();
+
+                if (mVideoWidth != 0 && mVideoHeight != 0) {
+                    onVideoSizeAvailable();
+                }
 
                 if (mMediaPlayerListener != null) {
                     mMediaPlayerListener.onVideoSizeChanged(width, height);
-                }
-
-                if (mPlayAsReady) {
-                    playWhenReady();
                 }
             }
 
             @Override
             public void onVideoCompletion() {
-
+                if (mMediaPlayerListener != null) {
+                    mMediaPlayerListener.onVideoCompletion();
+                }
             }
 
             @Override
             public void onVideoPrepared() {
-                //Should be synchronized, because state could be changed between if(...) and play()
-                synchronized (TextureVideoView.this) {
-                    if (mPlayAsReady) {
-                        log("Player is prepared and play() was called.");
-                        playWhenReady();
-                    }
-
-                    if (mMediaPlayerListener != null) {
-                        mMediaPlayerListener.onVideoPrepared();
-                    }
-                }
-            }
-
-            @Override
-            public void onVideoEnd() {
-                if (SHOW_LOGS) Log.v(TAG, "onVideoEnd, this " + TextureVideoView.this);
-
                 if (mMediaPlayerListener != null) {
-                    mMediaPlayerListener.onVideoEnd();
-                }
-
-                // This hack looping was added to support some devices (Samsung, or running Android 5.0 with NuPlayer),
-                // which ignore flag set by setLooping(boolean).
-                synchronized (TextureVideoView.this) {
-                    setDataSource(mDataSource);
-                    playWhenReady();
+                    mMediaPlayerListener.onVideoPrepared();
                 }
             }
 
             @Override
             public void onError(int what, int extra) {
-                if (SHOW_LOGS) Log.v(TAG, "onError, this " + VideoPlayer.this);
+                if (SHOW_LOGS) Logger.v(TAG, "onError, this " + VideoPlayer.this);
             }
         });
 
         mMediaPlayer.setVideoStateListener(mVideoStateListener);
     }
 
-    private void prepare() {
-        try {
-            mIsVideoStartedCalled.set(false);
-            // don't forget to call MediaPlayer.prepareAsync() method when you use constructor for
-            // creating MediaPlayer
-            mMediaPlayer.prepareAsync();
-        } catch (IllegalArgumentException | SecurityException e) {
-            Log.d(TAG, e.getMessage());
-        } catch (IllegalStateException e) {
-            Log.d(TAG, e.toString());
-        }
-    }
+    private void onVideoSizeAvailable() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> onVideoSizeAvailable");
 
-    /**
-     * Starts video playback.
-     * Do not call this method directly - consider using { @link #playWhenReady() } instead.
-     */
-    private synchronized void play() {
-        if (SHOW_LOGS) Log.v(TAG, "play, staring playback");
+        updateTextureViewSize();
 
-        checkMute();
-        mMediaPlayer.setLooping(true);
+        synchronized (mReadyForPlaybackIndicator){
+            if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeAvailable, mReadyForPlaybackIndicator " + mReadyForPlaybackIndicator);
 
-        mIsVideoStartedCalled.set(false);
+            mReadyForPlaybackIndicator.setVideoSize(mVideoHeight, mVideoWidth);
 
-        mMediaPlayer.start();
-        if (mMediaPlayer.getState() == State.PLAY) {
-            mPlayAsReady = false;
-        }
-    }
-
-    /**
-     * Play or resume video. Video will be played as soon as view is available and media player is
-     * prepared.
-     * <p/>
-     * If video is stopped or ended and playWhenReady() method was called, video will start over.
-     */
-    public void playWhenReady() {
-        if (SHOW_LOGS)
-            Log.v(TAG, "playWhenReady, mMediaPlayer.isReadyForPlayback() " + mMediaPlayer.isReadyForPlayback() + ", mIsViewAvailable " + mIsViewAvailable);
-        if (SHOW_LOGS) Log.v(TAG, "playWhenReady, w " + mVideoWidth + ", h " + mVideoHeight);
-
-        if (mMediaPlayer.isReadyForPlayback() && mIsViewAvailable) {
-            if (mVideoWidth != null && mVideoHeight != null) {
-                if (mVideoWidth > 0 && mVideoHeight > 0) {
-                    if (SHOW_LOGS) Log.d(TAG, "playWhenReady, everything is ok, playing");
-                    play();
-                } else {
-                    if (SHOW_LOGS) Log.d(TAG, "playWhenReady, video not loaded, resetting");
-                    // for some reason video can not be loaded (may happen on some devices, e.g. SGS3)
-                    // let's try to reset it
-                    setDataSource(mDataSource);
-                    mPlayAsReady = true;
-                }
-            } else {
-                if (SHOW_LOGS) Log.d(TAG, "playWhenReady, waiting for video size");
-                // wait for video size to be initialized (may be done after onPrepared() on some devices)
-                mPlayAsReady = true;
+            if(mReadyForPlaybackIndicator.isReadyForPlayback()){
+                mReadyForPlaybackIndicator.notify();
             }
-        } else {
-            if (SHOW_LOGS) Log.d(TAG, "playWhenReady, not ready yet, waiting");
-            mPlayAsReady = true;
         }
+        if (SHOW_LOGS) Logger.v(TAG, "<< onVideoSizeAvailable");
     }
+
 
     public void mute() {
         mMediaPlayer.setVolume(0, 0);
@@ -503,13 +458,10 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         return PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean(IS_VIDEO_LIST_MUTED, false);
     }
 
-    /**
-     * Pause video. If video is already paused, stopped or ended nothing will happen.
-     */
-    public synchronized void pause() {
-        mPlayAsReady = false; //Do not start play video after preparing, it was "paused" while preparing
+    public void pause() {
+        if (SHOW_LOGS) Logger.d(TAG, ">> pause ");
         mMediaPlayer.pause();
-        mIsVideoStartedCalled.set(false);
+        if (SHOW_LOGS) Logger.d(TAG, "<< pause");
     }
 
     /**
@@ -532,7 +484,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     }
 
     public void setVideoScale(float videoScale) {
-        if (SHOW_LOGS) Log.d(TAG, "setVideoScale, videoScale " + videoScale);
+        if (SHOW_LOGS) Logger.d(TAG, "setVideoScale, videoScale " + videoScale);
 
         mVideoScaleMultiplier = videoScale;
         updateMatrixScaleRotate();
@@ -567,7 +519,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     @Override
     public void setRotation(float degrees) {
         if (SHOW_LOGS)
-            Log.d(TAG, "setRotation, degrees " + degrees + ", mPivotPointX " + mPivotPointX + ", mPivotPointY " + mPivotPointY);
+            Logger.d(TAG, "setRotation, degrees " + degrees + ", mPivotPointX " + mPivotPointX + ", mPivotPointY " + mPivotPointY);
 
         mVideoRotation = degrees;
 
@@ -581,14 +533,14 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
 
     @Override
     public void setPivotX(float pivotX) {
-        if (SHOW_LOGS) Log.d(TAG, "setPivotX, pivotX " + pivotX);
+        if (SHOW_LOGS) Logger.d(TAG, "setPivotX, pivotX " + pivotX);
 
         mPivotPointX = pivotX;
     }
 
     @Override
     public void setPivotY(float pivotY) {
-        if (SHOW_LOGS) Log.d(TAG, "setPivotY, pivotY " + pivotY);
+        if (SHOW_LOGS) Logger.d(TAG, "setPivotY, pivotY " + pivotY);
 
         mPivotPointY = pivotY;
     }
@@ -603,36 +555,31 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         return mPivotPointY;
     }
 
-    static void log(String message) {
-        if (SHOW_LOGS) {
-            Log.d(TAG, message);
-        }
-    }
-
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
         if (SHOW_LOGS)
-            Log.v(TAG, "onSurfaceTextureAvailable, width " + width + ", height " + height + ", this " + this);
+            Logger.v(TAG, "onSurfaceTextureAvailable, width " + width + ", height " + height + ", this " + this);
 
-        if (!holdsMediaPlayer()) {
-            if (SHOW_LOGS)
-                Log.d(TAG, "onSurfaceTextureAvailable, not holding player at moment, ignoring call");
-            return;
+        notifyTextureAvailable();
+    }
+
+    private void notifyTextureAvailable() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> notifyTextureAvailable");
+
+        synchronized (mReadyForPlaybackIndicator){
+
+            if(mMediaPlayer != null){
+                mMediaPlayer.setSurfaceTexture(getSurfaceTexture());
+            }
+            mReadyForPlaybackIndicator.setSurfaceTextureAvailable(true);
+
+            if(mReadyForPlaybackIndicator.isReadyForPlayback()){
+
+                if (SHOW_LOGS) Logger.v(TAG, "notify ready for playback");
+                mReadyForPlaybackIndicator.notify();
+            }
         }
-
-        mMediaPlayer.setSurfaceTexture(surfaceTexture);
-        mIsViewAvailable = true;
-
-        if (mVideoWidth != null && mVideoHeight != null) {
-            if (SHOW_LOGS)
-                Log.d(TAG, "onSurfaceTextureAvailable, video size available, updating texture view size");
-            updateTextureViewSize();
-        }
-
-        if (mPlayAsReady) {
-            log("View is available and play() was called.");
-            playWhenReady();
-        }
+        if (SHOW_LOGS) Logger.v(TAG, "<< notifyTextureAvailable");
     }
 
     @Override
@@ -641,17 +588,8 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        if (SHOW_LOGS) Log.v(TAG, "onSurfaceTextureDestroyed");
+        if (SHOW_LOGS) Logger.v(TAG, "onSurfaceTextureDestroyed");
 
-        mIsViewAvailable = false;
-
-        if (!holdsMediaPlayer()) {
-            if (SHOW_LOGS)
-                Log.d(TAG, "onSurfaceTextureDestroyed, not holding player at moment, ignoring call");
-            return false;
-        }
-
-        pause();
         return false;
     }
 
@@ -660,40 +598,15 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
      */
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-//        if (SHOW_LOGS) Log.v(TAG, "onSurfaceTextureUpdated, mIsVideoStartedCalled " + mIsVideoStartedCalled.get() + ", mMediaPlayer.getState() " + mMediaPlayer.getState());
-
-        if (!holdsMediaPlayer()) {
-//            if (SHOW_LOGS) Log.d(TAG, "onSurfaceTextureUpdated, not holding player at moment, ignoring call");
-            return;
-        }
-
-        boolean playing = mMediaPlayer != null && mMediaPlayer.getState() == State.PLAY;
-        if (playing && mIsVideoStartedCalled.compareAndSet(false, true)) {
-            if (mPlaybackStartedListener != null) {
-                mPlaybackStartedListener.onPlaybackStarted();
-            }
-        }
-    }
-
-    @Override
-    protected void onVisibilityChanged(View changedView, int visibility) {
-        if (SHOW_LOGS)
-            Log.v(TAG, "onVisibilityChanged, view " + changedView + ", visibility " + visibility);
-        super.onVisibilityChanged(changedView, visibility);
-        if (visibility != VISIBLE && mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-            pause();
-        }
-    }
-
-    private boolean holdsMediaPlayer() {
-        return mMediaPlayer != null && mMediaPlayer.getHolderId() == getMediaPlayerHolderId();
-    }
-
-    private int getMediaPlayerHolderId() {
-        return hashCode();
+//        if (SHOW_LOGS) Logger.v(TAG, "onSurfaceTextureUpdated, mIsVideoStartedCalled " + mIsVideoStartedCalled.get() + ", mMediaPlayer.getState() " + mMediaPlayer.getState());
     }
 
     public interface PlaybackStartedListener {
         void onPlaybackStarted();
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "@" + hashCode();
     }
 }

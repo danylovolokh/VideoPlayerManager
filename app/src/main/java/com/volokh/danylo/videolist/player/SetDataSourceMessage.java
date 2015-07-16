@@ -14,7 +14,7 @@ public class SetDataSourceMessage extends PlayerMessage{
 
     @Override
     protected void performAction(VideoPlayer currentPlayer) {
-        currentPlayer.setVideoPath(mVideoUrl);
+        currentPlayer.setDataSource(mVideoUrl);
     }
 
     @Override

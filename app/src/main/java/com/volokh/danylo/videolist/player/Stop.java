@@ -10,7 +10,7 @@ public class Stop extends PlayerMessage {
 
     @Override
     protected void performAction(VideoPlayer currentPlayer) {
-        currentPlayer.stopPlayback();
+        currentPlayer.stop();
     }
 
     @Override
