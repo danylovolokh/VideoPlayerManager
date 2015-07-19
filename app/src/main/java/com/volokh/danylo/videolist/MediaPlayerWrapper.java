@@ -45,6 +45,8 @@ public class MediaPlayerWrapper {
         mMediaPlayer.setOnCompletionListener(mOnCompletionListener);
         mMediaPlayer.setOnErrorListener(mOnErrorListener);
         mMediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
+        mMediaPlayer.setOnInfoListener(mOnInfoListener);
+
     }
 
     public void prepare() {
@@ -193,6 +195,50 @@ public class MediaPlayerWrapper {
         }
     };
 
+    private final MediaPlayer.OnInfoListener mOnInfoListener = new MediaPlayer.OnInfoListener() {
+        @Override
+        public boolean onInfo(MediaPlayer mp, int what, int extra) {
+            if (SHOW_LOGS) Logger.v(TAG, "onInfo");
+            printInfo(what);
+            return false;
+        }
+    };
+
+    private void printInfo(int what) {
+        switch (what) {
+            case MediaPlayer.MEDIA_INFO_UNKNOWN:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_UNKNOWN");
+                break;
+            case MediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_VIDEO_TRACK_LAGGING");
+                break;
+            case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_VIDEO_RENDERING_START");
+                break;
+            case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_BUFFERING_START");
+                break;
+            case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_BUFFERING_END");
+                break;
+            case MediaPlayer.MEDIA_INFO_BAD_INTERLEAVING:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_BAD_INTERLEAVING");
+                break;
+            case MediaPlayer.MEDIA_INFO_NOT_SEEKABLE:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_NOT_SEEKABLE");
+                break;
+            case MediaPlayer.MEDIA_INFO_METADATA_UPDATE:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_METADATA_UPDATE");
+                break;
+            case MediaPlayer.MEDIA_INFO_UNSUPPORTED_SUBTITLE:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_UNSUPPORTED_SUBTITLE");
+                break;
+            case MediaPlayer.MEDIA_INFO_SUBTITLE_TIMED_OUT:
+                if (SHOW_LOGS) Logger.inf(TAG, "onInfo, MEDIA_INFO_SUBTITLE_TIMED_OUT");
+                break;
+        }
+    }
+
     /**
      * Listener trigger 'onVideoPrepared' and `onVideoCompletion` events
      */
@@ -266,7 +312,6 @@ public class MediaPlayerWrapper {
                     break;
                 case STARTED:
                     mMediaPlayer.pause();
-                    stopPositionUpdateNotifier();
                     mState.set(State.PAUSED);
                     break;
             }
@@ -284,6 +329,9 @@ public class MediaPlayerWrapper {
 
                 case STARTED:
                 case PAUSED:
+                    stopPositionUpdateNotifier();
+                    // should stop only if paused or started
+                    // FALL-THROUGH
                 case PLAYBACK_COMPLETED:
                 case PREPARED:
                 case PREPARING: // This is evaluation of http://developer.android.com/reference/android/media/MediaPlayer.html. Canot stop when preparing
@@ -294,7 +342,6 @@ public class MediaPlayerWrapper {
 
                     if (SHOW_LOGS) Logger.v(TAG, "<< stop");
 
-                    stopPositionUpdateNotifier();
                     mState.set(State.STOPPED);
                     break;
                 case STOPPED:
@@ -312,10 +359,9 @@ public class MediaPlayerWrapper {
     }
 
     public void reset() {
-        if (SHOW_LOGS) Logger.v(TAG, "<< reset , mState " + mState);
+        if (SHOW_LOGS) Logger.v(TAG, ">> reset , mState " + mState);
 
         synchronized (mState) {
-            stopPositionUpdateNotifier();
             mMediaPlayer.reset();
             mState.set(State.IDLE);
         }
@@ -463,6 +509,7 @@ public class MediaPlayerWrapper {
             Logger.v(TAG, "stopPositionUpdateNotifier, mPositionUpdateNotifier " + mPositionUpdateNotifier);
 
         mFuture.cancel(true);
+        mFuture = null;
     }
 
     private void notifyPositionUpdated() {
