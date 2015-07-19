@@ -294,7 +294,6 @@ public class MediaPlayerWrapper {
 
                     if (SHOW_LOGS) Logger.v(TAG, "<< stop");
 
-                    seekToPercent(0);
                     stopPositionUpdateNotifier();
                     mState.set(State.STOPPED);
                     break;

@@ -18,8 +18,6 @@ public abstract class PlayerMessage implements Message{
     }
 
     public void runMessage(){
-        mCallback.setVideoPlayer(mCurrentPlayer);
-
         mCallback.setVideoPlayerState(mCurrentPlayer, stateBefore());
         if(SHOW_LOGS) Logger.v(TAG, ">> runMessage, " + getClass().getSimpleName());
         performAction(mCurrentPlayer);

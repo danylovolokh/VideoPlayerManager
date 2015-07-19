@@ -31,12 +31,12 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
 
     @Override
     public void playNewVideo(VideoPlayer videoPlayer, String videoUrl) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayer + ", videoUrl " + videoUrl);
+        if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayer + ", mCurrentPlayer " + mCurrentPlayer + ", videoUrl " + videoUrl);
 
         synchronized (mCurrentPlayerState){
 
             mPlayerHandler.pauseQueueProcessing(TAG);
-            if(SHOW_LOGS) Logger.v(TAG, "playNewVideo, videoUrl " + videoUrl + ", mCurrentPlayerState " + mCurrentPlayerState);
+            if(SHOW_LOGS) Logger.v(TAG, "playNewVideo, mCurrentPlayerState " + mCurrentPlayerState);
 
             mPlayerHandler.clearAllPendingMessages(TAG);
 
@@ -67,7 +67,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     private void stopCurrentPlayer() {
-        if(SHOW_LOGS) Logger.v(TAG, "stopCurrentPlayer, mCurrentPlayerState " + mCurrentPlayerState);
+        if(SHOW_LOGS) Logger.v(TAG, "stopCurrentPlayer, mCurrentPlayerState " + mCurrentPlayerState +", mCurrentPlayer " + mCurrentPlayer);
 
         switch (mCurrentPlayerState.get()){
             case IDLE:
@@ -160,12 +160,12 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
 
     @Override
     public void setVideoPlayer(VideoPlayer videoPlayer) {
-//        if(SHOW_LOGS) Logger.v(TAG, ">> setVideoPlayer");
-//
-//        synchronized (mCurrentPlayer){
-//            mCurrentPlayer.set(videoPlayer);
-//        }
-//        if(SHOW_LOGS) Logger.v(TAG, "<< setVideoPlayer");
+        if(SHOW_LOGS) Logger.v(TAG, ">> setVideoPlayer");
+
+        synchronized (mCurrentPlayer){
+            mCurrentPlayer.set(videoPlayer);
+        }
+        if(SHOW_LOGS) Logger.v(TAG, "<< setVideoPlayer");
     }
 
     @Override
