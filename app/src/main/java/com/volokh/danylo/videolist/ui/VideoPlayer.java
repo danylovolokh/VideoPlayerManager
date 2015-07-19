@@ -98,6 +98,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     public void clearPlayerInstance() {
         checkThread();
         //TODO: clear listeners firs
+        mMediaPlayer.clearAll();
         mMediaPlayer = null;
     }
 
@@ -366,9 +367,9 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         mMediaPlayer.setListener(new MediaPlayerWrapper.MediaPlayerListener() {
             @Override
             public void onVideoSizeChanged(int width, int height) {
-                if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeChanged, width " + width + ", height " + height);
+                if (SHOW_LOGS) Logger.v(TAG, ">> onVideoSizeChanged, width " + width + ", height " + height);
 
-                if (width != 0 && height != 0) {
+                if (width  != 0 && height != 0) {
                     mVideoWidth = width;
                     mVideoHeight = height;
 
@@ -378,6 +379,8 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
                 if (mMediaPlayerListener != null) {
                     mMediaPlayerListener.onVideoSizeChanged(width, height);
                 }
+
+                if (SHOW_LOGS) Logger.v(TAG, "<< onVideoSizeChanged, width " + width + ", height " + height);
             }
 
             @Override
@@ -586,6 +589,8 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
 
             if(mMediaPlayer != null){
                 mMediaPlayer.setSurfaceTexture(getSurfaceTexture());
+            } else {
+                if (SHOW_LOGS) Logger.v(TAG, "mMediaPlayer null, cannot set surface texture");
             }
             mReadyForPlaybackIndicator.setSurfaceTextureAvailable(true);
 

@@ -25,6 +25,7 @@ public class MediaPlayerWrapper {
 
     public static final int POSITION_UPDATE_NOTIFYING_PERIOD = 100;         // milliseconds
     private ScheduledFuture<?> mFuture;
+    private Surface mSurface;
 
     public enum State {
         IDLE, INITIALIZED, PREPARING, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, END, ERROR
@@ -380,6 +381,25 @@ public class MediaPlayerWrapper {
         if (SHOW_LOGS) Logger.v(TAG, "<< release, mState " + mState);
     }
 
+    public void clearAll() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> clearAll, mState " + mState);
+        synchronized (mState) {
+            mMediaPlayer.setOnVideoSizeChangedListener(null);
+            mMediaPlayer.setOnCompletionListener(null);
+            mMediaPlayer.setOnErrorListener(null);
+            mMediaPlayer.setOnBufferingUpdateListener(null);
+            mMediaPlayer.setOnInfoListener(null);
+
+            if (SHOW_LOGS) Logger.v(TAG, "clearAll, mSurface " + mSurface);
+            if (SHOW_LOGS) Logger.v(TAG, "clearAll, surface isValid " + mSurface.isValid());
+            if (SHOW_LOGS) Logger.v(TAG, "clearAll, >> surface release ");
+            mSurface.release();
+            if (SHOW_LOGS) Logger.v(TAG, "clearAll, << surface release, surface isValid " + mSurface.isValid());
+            mSurface = null;
+        }
+        if (SHOW_LOGS) Logger.v(TAG, "<< clearAll, mState " + mState);
+    }
+
     public void setLooping(boolean looping) {
         if (SHOW_LOGS) Logger.v(TAG, "setLooping " + looping);
         mMediaPlayer.setLooping(looping);
@@ -387,11 +407,14 @@ public class MediaPlayerWrapper {
 
     public void setSurfaceTexture(SurfaceTexture surfaceTexture) {
         if (SHOW_LOGS) Logger.v(TAG, ">> setSurfaceTexture " + surfaceTexture);
-
-        Surface surface = new Surface(surfaceTexture);
-
-        mMediaPlayer.setSurface(surface);
+        if(surfaceTexture != null){
+            mSurface = new Surface(surfaceTexture);
+            mMediaPlayer.setSurface(mSurface);
+        } else {
+            mMediaPlayer.setSurface(null);
+        }
         if (SHOW_LOGS) Logger.v(TAG, "<< setSurfaceTexture " + surfaceTexture);
+
     }
 
     public void setVolume(float leftVolume, float rightVolume) {
@@ -532,7 +555,7 @@ public class MediaPlayerWrapper {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + ", mState " + mState;
+        return getClass().getSimpleName() + "@" + hashCode();
     }
 
     public interface MediaPlayerListener {
