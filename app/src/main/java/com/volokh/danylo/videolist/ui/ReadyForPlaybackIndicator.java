@@ -37,4 +37,9 @@ public class ReadyForPlaybackIndicator {
     public void setVideoSize(Integer videoHeight, Integer videoWidth) {
         mVideoSize = new Pair<>(videoHeight, videoWidth);
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + isReadyForPlayback();
+    }
 }

@@ -21,7 +21,7 @@ import java.io.IOException;
 public class VideoPlayer extends TextureView implements TextureView.SurfaceTextureListener{
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
-    private static final String TAG = VideoPlayer.class.getSimpleName();
+    private String TAG;
 
     private static final String IS_VIDEO_LIST_MUTED = "IS_VIDEO_LIST_MUTED";
 
@@ -102,15 +102,20 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     }
 
     public void createNewPlayerInstance() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> createNewPlayerInstance");
+
         checkThread();
         mMediaPlayer = new MediaPlayerWrapper();
 
         synchronized (mReadyForPlaybackIndicator){
             if(mReadyForPlaybackIndicator.isSurfaceTextureAvailable()){
                 mMediaPlayer.setSurfaceTexture(getSurfaceTexture());
+            } else {
+                if (SHOW_LOGS) Logger.v(TAG, "texture not available");
             }
         }
         setMediaPlayerListeners();
+        if (SHOW_LOGS) Logger.v(TAG, "<< createNewPlayerInstance");
     }
 
     public void prepare() {
@@ -160,6 +165,9 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     }
 
     private void initView() {
+        TAG = "" + this;
+
+        if (SHOW_LOGS) Logger.v(TAG, "initView");
 
         setScaleType(ScaleType.CENTER_CROP);
         setSurfaceTextureListener(this);
@@ -323,27 +331,6 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         }
     }
 
-    public void setMediaPlayer(MediaPlayerWrapper player, String dataSource) {
-        if (SHOW_LOGS)
-            Logger.v(TAG, "setMediaPlayer, player " + player + ", dataSource " + dataSource + ", this " + this);
-
-        if (player != null) {
-            mMediaPlayer.setListener(null);
-
-            mMediaPlayer = player;
-            mDataSource = dataSource;
-            final SurfaceTexture surfaceTexture = getSurfaceTexture();
-            if (surfaceTexture != null) {
-                mMediaPlayer.setSurfaceTexture(surfaceTexture);
-            }
-
-            setMediaPlayerListeners();
-
-            mVideoWidth = mMediaPlayer.getVideoWidth();
-            mVideoHeight = mMediaPlayer.getVideoHeight();
-        }
-    }
-
     public void setDataSource(String path) {
         checkThread();
 
@@ -374,17 +361,17 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     }
 
     private void setMediaPlayerListeners() {
-        if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeChanged");
+        if (SHOW_LOGS) Logger.v(TAG, "setMediaPlayerListeners");
 
         mMediaPlayer.setListener(new MediaPlayerWrapper.MediaPlayerListener() {
             @Override
             public void onVideoSizeChanged(int width, int height) {
                 if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeChanged, width " + width + ", height " + height);
 
-                mVideoWidth = width;
-                mVideoHeight = height;
+                if (width != 0 && height != 0) {
+                    mVideoWidth = width;
+                    mVideoHeight = height;
 
-                if (mVideoWidth != 0 && mVideoHeight != 0) {
                     onVideoSizeAvailable();
                 }
 
@@ -426,7 +413,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         mMediaPlayer.setVideoStateListener(mVideoStateListener);
     }
 
-    private static void printErrorExtra(int extra) {
+    private void printErrorExtra(int extra) {
         switch (extra){
             case MediaPlayer.MEDIA_ERROR_IO:
                 if (SHOW_LOGS) Logger.v(TAG, "error extra MEDIA_ERROR_IO");
@@ -618,7 +605,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
         if (SHOW_LOGS) Logger.v(TAG, "onSurfaceTextureDestroyed");
-
+        // TODO: cleanup
         return false;
     }
 

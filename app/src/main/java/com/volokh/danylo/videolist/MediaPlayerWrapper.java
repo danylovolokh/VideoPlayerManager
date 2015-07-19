@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class MediaPlayerWrapper {
 
-    private static final String TAG = MediaPlayerWrapper.class.getSimpleName();
+    private String TAG;
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
 
     public static final int POSITION_UPDATE_NOTIFYING_PERIOD = 100;         // milliseconds
@@ -39,6 +39,9 @@ public class MediaPlayerWrapper {
     private ScheduledExecutorService mPositionUpdateNotifier = Executors.newScheduledThreadPool(1);
 
     public MediaPlayerWrapper() {
+        TAG = "" + this;
+        if (SHOW_LOGS) Logger.v(TAG, "constructor of MediaPlayerWrapper");
+
         mMediaPlayer = new MediaPlayer();
         mState.set(State.IDLE);
         mMediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
