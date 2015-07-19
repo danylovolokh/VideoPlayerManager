@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.view.Surface;
 
 import com.volokh.danylo.videolist.utils.Logger;
+import com.volokh.danylo.videolist.utils.Utils;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class MediaPlayerWrapper {
         IDLE, INITIALIZED, PREPARING, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, END, ERROR
     }
 
-    private MediaPlayer mMediaPlayer;
+    private final MediaPlayer mMediaPlayer;
     private final AtomicReference<State> mState = new AtomicReference<>();
 
     private MediaPlayerListener mListener;
@@ -40,15 +41,14 @@ public class MediaPlayerWrapper {
     public MediaPlayerWrapper() {
         mMediaPlayer = new MediaPlayer();
         mState.set(State.IDLE);
-        setMediaPlayerListeners();
-    }
-
-    public State getState() {
-        return mState.get();
+        mMediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
+        mMediaPlayer.setOnCompletionListener(mOnCompletionListener);
+        mMediaPlayer.setOnErrorListener(mOnErrorListener);
+        mMediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
     }
 
     public void prepare() {
-        if (SHOW_LOGS) Logger.v(TAG, ">> prepare, mState " + mState.get());
+        if (SHOW_LOGS) Logger.v(TAG, ">> prepare, mState " + mState);
 
         synchronized (mState) {
             switch (mState.get()) {
@@ -63,7 +63,9 @@ public class MediaPlayerWrapper {
                         }
 
                     } catch (IllegalStateException | IOException ex) {
-                        if (SHOW_LOGS) Logger.err(TAG, ex.getMessage());
+                        if (SHOW_LOGS) Logger.err(TAG, "catch exception [" + ex.getMessage() + "]");
+                        // might happen because of ost internet connection
+//                      TODO: if (SHOW_LOGS) Logger.err(TAG, "catch exception, is Network Connected [" + Utils.isNetworkConnected());
                         mState.set(State.ERROR);
                     }
                     break;
@@ -78,7 +80,7 @@ public class MediaPlayerWrapper {
                     throw new IllegalStateException("prepare, called from illegal state " + mState);
             }
         }
-        if (SHOW_LOGS) Logger.v(TAG, "<< prepare, mState " + mState.get());
+        if (SHOW_LOGS) Logger.v(TAG, "<< prepare, mState " + mState);
     }
 
     /**
@@ -86,7 +88,7 @@ public class MediaPlayerWrapper {
      */
     public void setDataSource(String filePath) throws IOException {
         synchronized (mState) {
-            if (SHOW_LOGS) Logger.v(TAG, "setDataSource, filePath " + filePath + ", mState " + mState.get());
+            if (SHOW_LOGS) Logger.v(TAG, "setDataSource, filePath " + filePath + ", mState " + mState);
 
             switch (mState.get()) {
                 case IDLE:
@@ -103,7 +105,7 @@ public class MediaPlayerWrapper {
                 case END:
                 case ERROR:
                 default:
-                    throw new IllegalStateException("setDataSource called in state " + mState.get());
+                    throw new IllegalStateException("setDataSource called in state " + mState);
             }
         }
     }
@@ -131,12 +133,12 @@ public class MediaPlayerWrapper {
                 case END:
                 case ERROR:
                 default:
-                    throw new IllegalStateException("setDataSource called in state " + mState.get());
+                    throw new IllegalStateException("setDataSource called in state " + mState);
             }
         }
     }
 
-    private MediaPlayer.OnVideoSizeChangedListener mOnVideoSizeChangedListener = new MediaPlayer.OnVideoSizeChangedListener() {
+    private final MediaPlayer.OnVideoSizeChangedListener mOnVideoSizeChangedListener = new MediaPlayer.OnVideoSizeChangedListener() {
         @Override
         public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
             if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeChanged, width " + width + ", height " + height);
@@ -147,10 +149,10 @@ public class MediaPlayerWrapper {
         }
     };
 
-    private MediaPlayer.OnCompletionListener mOnCompletionListener = new MediaPlayer.OnCompletionListener() {
+    private final MediaPlayer.OnCompletionListener mOnCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
-            if (SHOW_LOGS) Logger.v(TAG, "onVideoCompletion, mState " + mState.get());
+            if (SHOW_LOGS) Logger.v(TAG, "onVideoCompletion, mState " + mState);
 
             synchronized (mState) {
                 mState.set(State.PLAYBACK_COMPLETED);
@@ -162,7 +164,7 @@ public class MediaPlayerWrapper {
         }
     };
 
-    private MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
+    private final MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
             if (SHOW_LOGS) Logger.v(TAG, "onError, what " + what + ", extra " + extra);
@@ -182,7 +184,7 @@ public class MediaPlayerWrapper {
         }
     };
 
-    MediaPlayer.OnBufferingUpdateListener mOnBufferingUpdateListener = new MediaPlayer.OnBufferingUpdateListener() {
+    private final MediaPlayer.OnBufferingUpdateListener mOnBufferingUpdateListener = new MediaPlayer.OnBufferingUpdateListener() {
         @Override
         public void onBufferingUpdate(MediaPlayer mp, int percent) {
             if (mVideoStateListener != null) {
@@ -190,13 +192,6 @@ public class MediaPlayerWrapper {
             }
         }
     };
-
-    private void setMediaPlayerListeners() {
-        mMediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
-        mMediaPlayer.setOnCompletionListener(mOnCompletionListener);
-        mMediaPlayer.setOnErrorListener(mOnErrorListener);
-        mMediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
-    }
 
     /**
      * Listener trigger 'onVideoPrepared' and `onVideoCompletion` events
@@ -216,55 +211,46 @@ public class MediaPlayerWrapper {
      * If video is stopped or ended and play() method was called, video will start over.
      */
     public void start() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> start");
+
         synchronized (mState) {
-            if (SHOW_LOGS) Logger.v(TAG, "start, mState " + mState.get());
+            if (SHOW_LOGS) Logger.v(TAG, "start, mState " + mState);
 
             switch (mState.get()) {
                 case IDLE:
-                    if (SHOW_LOGS) Logger.v(TAG, "start, data source was not set");
-                    break;
                 case INITIALIZED:
-                    if (SHOW_LOGS) Logger.v(TAG, "start, video is not prepared yet, waiting.");
-                    prepare();
-                    if (SHOW_LOGS)
-                        Logger.v(TAG, "start, video is " + mState.get() + ", starting playback.");
-                    mMediaPlayer.start();
-                    startPositionUpdateNotifier();
-                    mState.set(State.STARTED);
-                    break;
-                case STARTED:
-                    if (SHOW_LOGS) Logger.v(TAG, "start, video is already playing.");
-                    break;
                 case PREPARING:
-                    if (SHOW_LOGS) Logger.v(TAG, "start, video is preparing");
-                    break;
-                case PREPARED:
-                case PLAYBACK_COMPLETED:
-                case PAUSED:
-                case STOPPED:
+                case STARTED:
+                    throw new IllegalStateException("start, called from illegal state " + mState);
 
-                    if (SHOW_LOGS)
-                        Logger.v(TAG, "start, video is " + mState.get() + ", starting playback.");
+                case STOPPED:
+                case PLAYBACK_COMPLETED:
+                case PREPARED:
+                case PAUSED:
+
+                    if (SHOW_LOGS) Logger.v(TAG, "start, video is " + mState + ", starting playback.");
                     mMediaPlayer.start();
                     startPositionUpdateNotifier();
                     mState.set(State.STARTED);
 
                     break;
                 case ERROR:
-                    if (SHOW_LOGS) Logger.v(TAG, "start, player is in error state");
                 case END:
                     throw new IllegalStateException("start, called from illegal state " + mState);
             }
         }
+        if (SHOW_LOGS) Logger.v(TAG, "<< start");
     }
 
     /**
      * Pause video. If video is already paused, stopped or ended nothing will happen.
      */
     public void pause() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> pause");
+
         synchronized (mState) {
             if (SHOW_LOGS)
-                Logger.v(TAG, "pause, mState " + mState + ", mMediaPlayer isPlaying " + mMediaPlayer.isPlaying());
+                Logger.v(TAG, "pause, mState " + mState);
 
             switch (mState.get()) {
                 case IDLE:
@@ -285,9 +271,12 @@ public class MediaPlayerWrapper {
                     break;
             }
         }
+        if (SHOW_LOGS) Logger.v(TAG, "<< pause");
     }
 
     public void stop() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> stop");
+
         synchronized (mState) {
             if (SHOW_LOGS) Logger.v(TAG, "stop, mState " + mState);
 
@@ -320,28 +309,27 @@ public class MediaPlayerWrapper {
                     break;
             }
         }
+        if (SHOW_LOGS) Logger.v(TAG, "<< stop");
     }
 
     public void reset() {
-        synchronized (mState) {
-            if (SHOW_LOGS) Logger.v(TAG, "<< reset , mState " + mState);
+        if (SHOW_LOGS) Logger.v(TAG, "<< reset , mState " + mState);
 
+        synchronized (mState) {
             stopPositionUpdateNotifier();
             mMediaPlayer.reset();
             mState.set(State.IDLE);
-            if (SHOW_LOGS) Logger.v(TAG, "<< reset , mState " + mState);
         }
+        if (SHOW_LOGS) Logger.v(TAG, "<< reset , mState " + mState);
     }
 
     public void release() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> release, mState " + mState);
         synchronized (mState) {
-            if (SHOW_LOGS) Logger.v(TAG, ">> release, mState " + mState);
-
             mMediaPlayer.release();
             mState.set(State.END);
-
-            if (SHOW_LOGS) Logger.v(TAG, "<< release, mState " + mState.get());
         }
+        if (SHOW_LOGS) Logger.v(TAG, "<< release, mState " + mState);
     }
 
     public void setLooping(boolean looping) {
@@ -480,7 +468,7 @@ public class MediaPlayerWrapper {
 
     private void notifyPositionUpdated() {
         synchronized (mState) { //todo: remove
-            if (SHOW_LOGS) Logger.v(TAG, "notifyPositionUpdated, mVideoStateListener " + mVideoStateListener + ", mMediaPlayer " + mMediaPlayer + (mMediaPlayer != null ? ", mMediaPlayer.isPlaying() " + mMediaPlayer.isPlaying() : "") + ", mState " + mState.get());
+//            if (SHOW_LOGS) Logger.v(TAG, "notifyPositionUpdated, mVideoStateListener " + mVideoStateListener);
 
             if (mVideoStateListener != null && mState.get() == State.STARTED) {
                 mVideoStateListener.onVideoPlayTimeChanged(mMediaPlayer.getCurrentPosition());

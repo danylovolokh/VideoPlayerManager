@@ -18,4 +18,9 @@ public class SetNewViewForPlayback implements Message {
         // TODO: set state
         mCallback.setVideoPlayer(mCurrentPlayer);
     }
+
+    @Override
+    public String toString() {
+        return SetNewViewForPlayback.class.getSimpleName() + ", mCurrentPlayer " + mCurrentPlayer;
+    }
 }

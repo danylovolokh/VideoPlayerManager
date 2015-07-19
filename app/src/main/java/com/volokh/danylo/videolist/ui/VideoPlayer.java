@@ -97,6 +97,7 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
 
     public void clearPlayerInstance() {
         checkThread();
+        //TODO: clear listeners firs
         mMediaPlayer = null;
     }
 
@@ -373,11 +374,12 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     }
 
     private void setMediaPlayerListeners() {
+        if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeChanged");
+
         mMediaPlayer.setListener(new MediaPlayerWrapper.MediaPlayerListener() {
             @Override
             public void onVideoSizeChanged(int width, int height) {
-                if (SHOW_LOGS)
-                    Logger.v(TAG, "onVideoSizeChanged, width " + width + ", height " + height);
+                if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeChanged, width " + width + ", height " + height);
 
                 mVideoWidth = width;
                 mVideoHeight = height;
@@ -408,10 +410,37 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
             @Override
             public void onError(int what, int extra) {
                 if (SHOW_LOGS) Logger.v(TAG, "onError, this " + VideoPlayer.this);
+                switch (what) {
+                    case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+                        if (SHOW_LOGS) Logger.v(TAG, "onError, what MEDIA_ERROR_SERVER_DIED");
+                        printErrorExtra(extra);
+                        break;
+                    case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+                        if (SHOW_LOGS) Logger.v(TAG, "onError, what MEDIA_ERROR_UNKNOWN");
+                        printErrorExtra(extra);
+                        break;
+                }
             }
         });
 
         mMediaPlayer.setVideoStateListener(mVideoStateListener);
+    }
+
+    private static void printErrorExtra(int extra) {
+        switch (extra){
+            case MediaPlayer.MEDIA_ERROR_IO:
+                if (SHOW_LOGS) Logger.v(TAG, "error extra MEDIA_ERROR_IO");
+                break;
+            case MediaPlayer.MEDIA_ERROR_MALFORMED:
+                if (SHOW_LOGS) Logger.v(TAG, "error extra MEDIA_ERROR_MALFORMED");
+                break;
+            case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
+                if (SHOW_LOGS) Logger.v(TAG, "error extra MEDIA_ERROR_UNSUPPORTED");
+                break;
+            case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
+                if (SHOW_LOGS) Logger.v(TAG, "error extra MEDIA_ERROR_TIMED_OUT");
+                break;
+        }
     }
 
     private void onVideoSizeAvailable() {
