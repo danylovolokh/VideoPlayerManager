@@ -5,11 +5,8 @@ import com.volokh.danylo.videolist.ui.VideoPlayer;
 
 public class Prepare extends PlayerMessage{
 
-    private final String mVideoUrl;
-
-    public Prepare(VideoPlayer videoPlayer, String videoUrl, VideoPlayerManagerCallback callback) {
+    public Prepare(VideoPlayer videoPlayer, VideoPlayerManagerCallback callback) {
         super(videoPlayer, callback);
-        mVideoUrl = videoUrl;
     }
 
     @Override

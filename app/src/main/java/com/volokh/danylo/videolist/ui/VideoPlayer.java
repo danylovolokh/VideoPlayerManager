@@ -3,6 +3,7 @@ package com.volokh.danylo.videolist.ui;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
@@ -43,8 +44,6 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     private float mVideoRotation = 0f;
 
     private ScaleType mScaleType;
-
-    private String mDataSource;
 
     private MediaPlayerWrapper.MediaPlayerListener mMediaPlayerListener;
     private PlaybackStartedListener mPlaybackStartedListener;
@@ -340,13 +339,24 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         try {
             mMediaPlayer.setDataSource(path);
 
-            mDataSource = path;
         } catch (IOException e) {
             Logger.d(TAG, e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
+    public void setDataSource(AssetFileDescriptor assetFileDescriptor) {
+        checkThread();
+
+        if (SHOW_LOGS) Logger.v(TAG, "setDataSource, assetFileDescriptor " + assetFileDescriptor + ", this " + this);
+
+        try {
+            mMediaPlayer.setDataSource(assetFileDescriptor);
+        } catch (IOException e) {
+            Logger.d(TAG, e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 
     public void setOnVideoStateChangedListener(MediaPlayerWrapper.VideoStateListener listener) {
         mVideoStateListener = listener;
@@ -367,6 +377,8 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         mMediaPlayer.setListener(new MediaPlayerWrapper.MediaPlayerListener() {
             @Override
             public void onVideoSizeChanged(int width, int height) {
+
+                // TODO: move to background thread
                 if (SHOW_LOGS) Logger.v(TAG, ">> onVideoSizeChanged, width " + width + ", height " + height);
 
                 if (width  != 0 && height != 0) {

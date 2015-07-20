@@ -5,11 +5,8 @@ import com.volokh.danylo.videolist.ui.VideoPlayer;
 
 public class Start extends PlayerMessage{
 
-    private final String mVideoUrl; // TODO: remove
-
-    public Start(VideoPlayer videoPlayer, String videoUrl, VideoPlayerManagerCallback callback) {
+    public Start(VideoPlayer videoPlayer, VideoPlayerManagerCallback callback) {
         super(videoPlayer, callback);
-        mVideoUrl = videoUrl;
     }
 
     @Override

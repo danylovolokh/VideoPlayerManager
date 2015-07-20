@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.view.Surface;
 
 import com.volokh.danylo.videolist.utils.Logger;
-import com.volokh.danylo.videolist.utils.Utils;
 
 import java.io.FileDescriptor;
 import java.io.IOException;

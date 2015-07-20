@@ -1,17 +1,20 @@
 package com.volokh.danylo.videolist.adapter;
 
+import android.content.res.AssetFileDescriptor;
+
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
 import com.volokh.danylo.videolist.player.ClearPlayerInstance;
 import com.volokh.danylo.videolist.player.CreateNewPlayerInstance;
-import com.volokh.danylo.videolist.player.SetDataSourceMessage;
+import com.volokh.danylo.videolist.player.SetAssetsDataSourceMessage;
 import com.volokh.danylo.videolist.player.PlayerHandlerThread;
 import com.volokh.danylo.videolist.player.PlayerMessageState;
 import com.volokh.danylo.videolist.player.Prepare;
 import com.volokh.danylo.videolist.player.Release;
 import com.volokh.danylo.videolist.player.Reset;
 import com.volokh.danylo.videolist.player.SetNewViewForPlayback;
+import com.volokh.danylo.videolist.player.SetUrlDataSourceMessage;
 import com.volokh.danylo.videolist.player.Start;
 import com.volokh.danylo.videolist.player.Stop;
 import com.volokh.danylo.videolist.ui.VideoPlayer;
@@ -50,14 +53,59 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayer + ", videoUrl " + videoUrl);
     }
 
+    @Override
+    public void playNewVideo(VideoPlayer videoPlayer, AssetFileDescriptor assetFileDescriptor) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayer + ", mCurrentPlayer " + mCurrentPlayer + ", assetFileDescriptor " + assetFileDescriptor);
+
+        synchronized (mCurrentPlayerState){
+
+            mPlayerHandler.pauseQueueProcessing(TAG);
+            if(SHOW_LOGS) Logger.v(TAG, "playNewVideo, mCurrentPlayerState " + mCurrentPlayerState);
+
+            mPlayerHandler.clearAllPendingMessages(TAG);
+
+            stopCurrentPlayer();
+            setNewViewForPlayback(videoPlayer);
+            startPlayback(videoPlayer, assetFileDescriptor);
+
+            mPlayerHandler.resumeQueueProcessing(TAG);
+        }
+
+        if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayer + ", assetFileDescriptor " + assetFileDescriptor);
+    }
+
+    @Override
+    public void stopAnyPlayback() {
+        synchronized (mCurrentPlayerState){
+
+            mPlayerHandler.pauseQueueProcessing(TAG);
+            if(SHOW_LOGS) Logger.v(TAG, "stopAnyPlayback, mCurrentPlayerState " + mCurrentPlayerState);
+            mPlayerHandler.clearAllPendingMessages(TAG);
+            stopCurrentPlayer();
+
+            mPlayerHandler.resumeQueueProcessing(TAG);
+        }
+    }
+
     private void startPlayback(VideoPlayer videoPlayer, String videoUrl) {
         if(SHOW_LOGS) Logger.v(TAG, "startPlayback");
 
         mPlayerHandler.addMessages(Arrays.asList(
                 new CreateNewPlayerInstance(videoPlayer, this),
-                new SetDataSourceMessage(videoPlayer, videoUrl, this),
-                new Prepare(videoPlayer, videoUrl, this),
-                new Start(videoPlayer, videoUrl, this)
+                new SetUrlDataSourceMessage(videoPlayer, videoUrl, this),
+                new Prepare(videoPlayer, this),
+                new Start(videoPlayer, this)
+        ));
+    }
+
+    private void startPlayback(VideoPlayer videoPlayer, AssetFileDescriptor assetFileDescriptor) {
+        if(SHOW_LOGS) Logger.v(TAG, "startPlayback");
+
+        mPlayerHandler.addMessages(Arrays.asList(
+                new CreateNewPlayerInstance(videoPlayer, this),
+                new SetAssetsDataSourceMessage(videoPlayer, assetFileDescriptor, this),
+                new Prepare(videoPlayer, this),
+                new Start(videoPlayer, this)
         ));
     }
 
