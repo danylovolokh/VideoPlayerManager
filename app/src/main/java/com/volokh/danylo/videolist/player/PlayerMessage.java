@@ -17,13 +17,20 @@ public abstract class PlayerMessage implements Message{
         mCallback = callback;
     }
 
-    public void runMessage(){
+    @Override
+    public final void polledFromQueue() {
         mCallback.setVideoPlayerState(mCurrentPlayer, stateBefore());
+    }
+
+    @Override
+    public final void messageFinished() {
+        mCallback.setVideoPlayerState(mCurrentPlayer, stateAfter());
+    }
+
+    public final void runMessage(){
         if(SHOW_LOGS) Logger.v(TAG, ">> runMessage, " + getClass().getSimpleName());
         performAction(mCurrentPlayer);
         if(SHOW_LOGS) Logger.v(TAG, "<< runMessage, " + getClass().getSimpleName());
-        mCallback.setVideoPlayerState(mCurrentPlayer, stateAfter());
-
     }
 
     @Override

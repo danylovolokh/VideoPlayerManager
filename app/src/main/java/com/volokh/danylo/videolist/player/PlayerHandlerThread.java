@@ -1,7 +1,6 @@
 package com.volokh.danylo.videolist.player;
 
 import com.volokh.danylo.videolist.Config;
-import com.volokh.danylo.videolist.ui.VideoPlayer;
 import com.volokh.danylo.videolist.utils.Logger;
 import com.volokh.danylo.videolist.visitors.Visitor;
 
@@ -17,12 +16,11 @@ public class PlayerHandlerThread {
     private final String mTag;
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
 
-    private VideoPlayer mCurrentPlayer;
     private final Queue<Message> mPlayerMessagesQueue = new ConcurrentLinkedQueue<>();
     private final PlayerQueueLock mQueueLock = new PlayerQueueLock();
     private final Executor mQueueProcessingThread = Executors.newSingleThreadExecutor();
 
-    private AtomicBoolean mTerminated = new AtomicBoolean(false);
+    private AtomicBoolean mTerminated = new AtomicBoolean(false); // TODO: use it
     private Message mLastMessage;
 
     public PlayerHandlerThread(String tag) {
@@ -48,11 +46,17 @@ public class PlayerHandlerThread {
                         }
                     }
                     mLastMessage = mPlayerMessagesQueue.poll();
+
+                    mLastMessage.polledFromQueue();
                     if (SHOW_LOGS) Logger.v(mTag, "poll mLastMessage " + mLastMessage);
                     mQueueLock.unlock(mTag);
 
                     if (SHOW_LOGS) Logger.v(mTag, "run, mLastMessage " + mLastMessage);
                     mLastMessage.runMessage();
+
+                    mQueueLock.lock(mTag);
+                    mLastMessage.messageFinished();
+                    mQueueLock.unlock(mTag);
 
                 } while (!mTerminated.get());
 
@@ -71,11 +75,6 @@ public class PlayerHandlerThread {
         if (SHOW_LOGS) Logger.v(mTag, "<< addMessage, unlock " + message);
         mQueueLock.unlock(mTag);
     }
-
-    public boolean visitPendingMessage(Visitor visitor){
-        return false;
-    }
-
 
     public void addMessages(List<PlayerMessage> messages) {
         if (SHOW_LOGS) Logger.v(mTag, ">> addMessages, lock " + messages);

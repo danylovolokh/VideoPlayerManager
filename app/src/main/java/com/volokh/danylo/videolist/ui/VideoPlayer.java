@@ -95,10 +95,14 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
     }
 
     public void clearPlayerInstance() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> clearPlayerInstance");
+
         checkThread();
         //TODO: clear listeners firs
         mMediaPlayer.clearAll();
         mMediaPlayer = null;
+
+        if (SHOW_LOGS) Logger.v(TAG, "<< clearPlayerInstance");
     }
 
     public void createNewPlayerInstance() {

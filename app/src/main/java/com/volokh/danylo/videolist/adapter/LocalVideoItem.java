@@ -17,8 +17,12 @@ public class LocalVideoItem implements VideoItem{
     }
 
     @Override
-    public View createView(ViewGroup parent) {
+    public View createView(ViewGroup parent, int screenWidth) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.video_item, parent, false);
+        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+        layoutParams.height = screenWidth;
+        layoutParams.width = screenWidth;
+
         view.setTag(new VideoViewHolder(view));
         return view;
     }

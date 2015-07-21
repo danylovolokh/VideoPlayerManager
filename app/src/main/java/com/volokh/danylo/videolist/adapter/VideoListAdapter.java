@@ -43,7 +43,8 @@ public class VideoListAdapter extends BaseAdapter {
 
         View resultView;
         if(convertView == null){
-            resultView = videoItem.createView(parent);
+
+            resultView = videoItem.createView(parent, mContext.getResources().getDisplayMetrics().widthPixels);
         } else {
             resultView = convertView;
         }

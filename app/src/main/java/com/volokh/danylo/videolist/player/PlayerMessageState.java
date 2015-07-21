@@ -1,6 +1,7 @@
 package com.volokh.danylo.videolist.player;
 
 public enum PlayerMessageState {
+    SETTING_NEW_PLAYER,
     IDLE,
     INITIALIZED,
     PREPARING,
