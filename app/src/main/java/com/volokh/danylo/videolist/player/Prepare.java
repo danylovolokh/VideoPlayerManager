@@ -1,9 +1,17 @@
 package com.volokh.danylo.videolist.player;
 
+import com.volokh.danylo.videolist.Config;
+import com.volokh.danylo.videolist.MediaPlayerWrapper;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
 import com.volokh.danylo.videolist.ui.VideoPlayer;
+import com.volokh.danylo.videolist.utils.Logger;
 
 public class Prepare extends PlayerMessage{
+
+    private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
+    private static final String TAG = Prepare.class.getSimpleName();
+
+    private PlayerMessageState mResultPlayerMessageState;
 
     public Prepare(VideoPlayer videoPlayer, VideoPlayerManagerCallback callback) {
         super(videoPlayer, callback);
@@ -11,8 +19,29 @@ public class Prepare extends PlayerMessage{
 
     @Override
     protected void performAction(VideoPlayer currentPlayer) {
-        // TODO: check current state if not error
-        currentPlayer.prepare();
+
+        MediaPlayerWrapper.State resultOfPrepare = currentPlayer.prepare();
+        if(SHOW_LOGS) Logger.v(TAG, "resultOfPrepare " + resultOfPrepare);
+
+        switch (resultOfPrepare){
+            case IDLE:
+            case INITIALIZED:
+            case PREPARING:
+            case STARTED:
+            case PAUSED:
+            case STOPPED:
+            case PLAYBACK_COMPLETED:
+            case END:
+                throw new RuntimeException("unhandled state " + resultOfPrepare);
+
+            case PREPARED:
+                mResultPlayerMessageState = PlayerMessageState.PREPARED;
+                break;
+
+            case ERROR:
+                mResultPlayerMessageState = PlayerMessageState.ERROR;
+                break;
+        }
     }
 
     @Override
@@ -22,6 +51,6 @@ public class Prepare extends PlayerMessage{
 
     @Override
     protected PlayerMessageState stateAfter() {
-        return PlayerMessageState.PREPARED;
+        return mResultPlayerMessageState;
     }
 }

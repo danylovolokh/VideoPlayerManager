@@ -7,4 +7,6 @@ public interface VideoPlayerManagerCallback {
     void setVideoPlayer(VideoPlayer videoPlayer);
 
     void setVideoPlayerState(VideoPlayer videoPlayer, PlayerMessageState playerMessageState);
+
+    PlayerMessageState getCurrentPlayerState();
 }

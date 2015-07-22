@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
+import com.volokh.danylo.videolist.adapter.items.VideoItem;
 
 import java.util.List;
 

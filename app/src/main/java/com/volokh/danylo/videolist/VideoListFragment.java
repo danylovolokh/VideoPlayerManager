@@ -7,11 +7,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
-import com.volokh.danylo.videolist.adapter.LocalVideoItem;
+import com.volokh.danylo.videolist.adapter.items.LocalVideoItem;
 import com.volokh.danylo.videolist.adapter.SingleVideoPlayerManager;
-import com.volokh.danylo.videolist.adapter.VideoItem;
+import com.volokh.danylo.videolist.adapter.items.VideoItem;
 import com.volokh.danylo.videolist.adapter.VideoListAdapter;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
+import com.volokh.danylo.videolist.adapter.items.DirectLinkVideoItem;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class VideoListFragment extends Fragment{
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_kurim.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("OE_na_nebi.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("podaruj_svitlo.mp4")));
+//            mList.add(new DirectLinkVideoItem("https://www.dropbox.com/s/k45p9qwaghx547w/Batman%20vs%20Dracula.mp4?dl=0"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

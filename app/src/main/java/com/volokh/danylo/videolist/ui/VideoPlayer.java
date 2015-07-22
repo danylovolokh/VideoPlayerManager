@@ -122,9 +122,10 @@ public class VideoPlayer extends TextureView implements TextureView.SurfaceTextu
         if (SHOW_LOGS) Logger.v(TAG, "<< createNewPlayerInstance");
     }
 
-    public void prepare() {
+    public MediaPlayerWrapper.State prepare() {
         checkThread();
         mMediaPlayer.prepare();
+        return mMediaPlayer.getCurrentState();
     }
 
     public void stop() {

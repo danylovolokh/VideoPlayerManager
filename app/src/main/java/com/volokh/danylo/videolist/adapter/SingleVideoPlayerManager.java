@@ -142,6 +142,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
 
             case STOPPING:
             case STOPPED:
+            case ERROR: // reset if error
                 mPlayerHandler.addMessage(new Reset(mCurrentPlayer, this));
                 //FALL-THROUGH
             case RESETTING:
@@ -154,7 +155,6 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
 
                 break;
             case END:
-            case ERROR:
             case PLAYBACK_COMPLETED:
                 throw new RuntimeException("unhandled " + mCurrentPlayerState);
         }
@@ -176,5 +176,11 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mCurrentPlayerState = playerMessageState;
 
         if(SHOW_LOGS) Logger.v(TAG, "<< setVideoPlayerState, playerMessageState " + playerMessageState + ", videoPlayer " + videoPlayer);
+    }
+
+    @Override
+    public PlayerMessageState getCurrentPlayerState() {
+        if(SHOW_LOGS) Logger.v(TAG, "getCurrentPlayerState, mCurrentPlayerState " + mCurrentPlayerState);
+        return mCurrentPlayerState;
     }
 }

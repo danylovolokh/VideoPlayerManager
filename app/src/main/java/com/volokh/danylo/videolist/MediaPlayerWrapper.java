@@ -67,11 +67,23 @@ public class MediaPlayerWrapper {
                             mListener.onVideoPrepared();
                         }
 
-                    } catch (IllegalStateException | IOException ex) {
-                        if (SHOW_LOGS) Logger.err(TAG, "catch exception [" + ex.getMessage() + "]");
+                    } catch (IllegalStateException ex) {
+                        if (SHOW_LOGS) Logger.err(TAG, "catch exception [" + ex + "]");
+                        mState.set(State.ERROR);
+
+                        if (mListener != null) {
+                            mListener.onError(1, -1004); //TODO: remove magic numbers. Find a way to get actual error
+                        }
+
+                    } catch (IOException ex){
+                        if (SHOW_LOGS) Logger.err(TAG, "catch IO exception [" + ex + "]");
                         // might happen because of ost internet connection
 //                      TODO: if (SHOW_LOGS) Logger.err(TAG, "catch exception, is Network Connected [" + Utils.isNetworkConnected());
                         mState.set(State.ERROR);
+
+                        if (mListener != null) {
+                            mListener.onError(1, -1004); //TODO: remove magic numbers. Find a way to get actual error
+                        }
                     }
                     break;
                 case IDLE:
@@ -143,6 +155,7 @@ public class MediaPlayerWrapper {
         }
     }
 
+    // TODO: use this instead
     private final MediaPlayer.OnVideoSizeChangedListener mOnVideoSizeChangedListener = new MediaPlayer.OnVideoSizeChangedListener() {
         @Override
         public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
@@ -154,6 +167,7 @@ public class MediaPlayerWrapper {
         }
     };
 
+    // TODO: use this instead
     private final MediaPlayer.OnCompletionListener mOnCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
@@ -169,6 +183,7 @@ public class MediaPlayerWrapper {
         }
     };
 
+    // TODO: use this instead
     private final MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -189,6 +204,7 @@ public class MediaPlayerWrapper {
         }
     };
 
+    // TODO: use this instead
     private final MediaPlayer.OnBufferingUpdateListener mOnBufferingUpdateListener = new MediaPlayer.OnBufferingUpdateListener() {
         @Override
         public void onBufferingUpdate(MediaPlayer mp, int percent) {
@@ -198,6 +214,7 @@ public class MediaPlayerWrapper {
         }
     };
 
+    // TODO: use this instead
     private final MediaPlayer.OnInfoListener mOnInfoListener = new MediaPlayer.OnInfoListener() {
         @Override
         public boolean onInfo(MediaPlayer mp, int what, int extra) {
@@ -544,6 +561,12 @@ public class MediaPlayerWrapper {
             if (mVideoStateListener != null && mState.get() == State.STARTED) {
                 mVideoStateListener.onVideoPlayTimeChanged(mMediaPlayer.getCurrentPosition());
             }
+        }
+    }
+
+    public State getCurrentState() {
+        synchronized (mState){
+            return mState.get();
         }
     }
 

@@ -17,6 +17,10 @@ public abstract class PlayerMessage implements Message{
         mCallback = callback;
     }
 
+    protected final PlayerMessageState getCurrentState(){
+        return mCallback.getCurrentPlayerState();
+    }
+
     @Override
     public final void polledFromQueue() {
         mCallback.setVideoPlayerState(mCurrentPlayer, stateBefore());
