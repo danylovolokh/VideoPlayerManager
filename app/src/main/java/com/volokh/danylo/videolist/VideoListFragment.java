@@ -28,13 +28,21 @@ public class VideoListFragment extends Fragment{
                              Bundle savedInstanceState) {
 
         try {
+            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4")));
+            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("DZIDZIO.mp4")));
+            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Tyrion speech during trial.mp4")));
+            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Grasshopper.mp4")));
+            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Neo vs. Luke Skywalker.mp4")));
+            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("ne_lyubish.mp4")));
+            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("ostanus.mp4")));
+            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Dozenemo.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("O_TORVALD_Ne_vona.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_cofe.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_kurim.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("OE_na_nebi.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("podaruj_svitlo.mp4")));
-//            mList.add(new DirectLinkVideoItem("https://www.dropbox.com/s/k45p9qwaghx547w/Batman%20vs%20Dracula.mp4?dl=0"));
+            mList.add(new DirectLinkVideoItem("https://duw49sogxuf9v.cloudfront.net/d/c/MlYeMAJVR21vBwdhCzE"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

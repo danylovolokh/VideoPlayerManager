@@ -2,7 +2,7 @@ package com.volokh.danylo.videolist.player;
 
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
-import com.volokh.danylo.videolist.ui.VideoPlayer;
+import com.volokh.danylo.videolist.ui.VideoPlayerView;
 import com.volokh.danylo.videolist.utils.Logger;
 
 public class Start extends PlayerMessage{
@@ -12,12 +12,12 @@ public class Start extends PlayerMessage{
 
     private PlayerMessageState mResultPlayerMessageState;
 
-    public Start(VideoPlayer videoPlayer, VideoPlayerManagerCallback callback) {
-        super(videoPlayer, callback);
+    public Start(VideoPlayerView videoPlayerView, VideoPlayerManagerCallback callback) {
+        super(videoPlayerView, callback);
     }
 
     @Override
-    protected void performAction(VideoPlayer currentPlayer) {
+    protected void performAction(VideoPlayerView currentPlayer) {
 
         PlayerMessageState currentState = getCurrentState();
         if(SHOW_LOGS) Logger.d(TAG, "currentState " + currentState);

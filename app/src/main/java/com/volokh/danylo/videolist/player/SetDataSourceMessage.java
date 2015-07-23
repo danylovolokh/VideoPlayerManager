@@ -1,12 +1,12 @@
 package com.volokh.danylo.videolist.player;
 
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
-import com.volokh.danylo.videolist.ui.VideoPlayer;
+import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
 public abstract class SetDataSourceMessage extends PlayerMessage{
 
-    public SetDataSourceMessage(VideoPlayer videoPlayer, VideoPlayerManagerCallback callback) {
-        super(videoPlayer, callback);
+    public SetDataSourceMessage(VideoPlayerView videoPlayerView, VideoPlayerManagerCallback callback) {
+        super(videoPlayerView, callback);
     }
 
     @Override

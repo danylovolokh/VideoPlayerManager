@@ -17,7 +17,7 @@ import com.volokh.danylo.videolist.player.SetNewViewForPlayback;
 import com.volokh.danylo.videolist.player.SetUrlDataSourceMessage;
 import com.volokh.danylo.videolist.player.Start;
 import com.volokh.danylo.videolist.player.Stop;
-import com.volokh.danylo.videolist.ui.VideoPlayer;
+import com.volokh.danylo.videolist.ui.VideoPlayerView;
 import com.volokh.danylo.videolist.utils.Logger;
 
 import java.util.Arrays;
@@ -29,12 +29,12 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
 
     private final PlayerHandlerThread mPlayerHandler = new PlayerHandlerThread(TAG);
 
-    private VideoPlayer mCurrentPlayer = null;
+    private VideoPlayerView mCurrentPlayer = null;
     private PlayerMessageState mCurrentPlayerState = PlayerMessageState.IDLE;
 
     @Override
-    public void playNewVideo(VideoPlayer videoPlayer, String videoUrl) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayer + ", mCurrentPlayer " + mCurrentPlayer + ", videoUrl " + videoUrl);
+    public void playNewVideo(VideoPlayerView videoPlayerView, String videoUrl) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayerView + ", mCurrentPlayer " + mCurrentPlayer + ", videoUrl " + videoUrl);
 
 
         mPlayerHandler.pauseQueueProcessing(TAG);
@@ -43,17 +43,17 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mPlayerHandler.clearAllPendingMessages(TAG);
 
         stopCurrentPlayer();
-        setNewViewForPlayback(videoPlayer);
-        startPlayback(videoPlayer, videoUrl);
+        setNewViewForPlayback(videoPlayerView);
+        startPlayback(videoPlayerView, videoUrl);
 
         mPlayerHandler.resumeQueueProcessing(TAG);
 
-        if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayer + ", videoUrl " + videoUrl);
+        if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayerView + ", videoUrl " + videoUrl);
     }
 
     @Override
-    public void playNewVideo(VideoPlayer videoPlayer, AssetFileDescriptor assetFileDescriptor) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayer + ", mCurrentPlayer " + mCurrentPlayer + ", assetFileDescriptor " + assetFileDescriptor);
+    public void playNewVideo(VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayerView + ", mCurrentPlayer " + mCurrentPlayer + ", assetFileDescriptor " + assetFileDescriptor);
 
         mPlayerHandler.pauseQueueProcessing(TAG);
 
@@ -63,13 +63,13 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mPlayerHandler.clearAllPendingMessages(TAG);
 
         stopCurrentPlayer();
-        setNewViewForPlayback(videoPlayer);
-        startPlayback(videoPlayer, assetFileDescriptor);
+        setNewViewForPlayback(videoPlayerView);
+        startPlayback(videoPlayerView, assetFileDescriptor);
 
         mPlayerHandler.resumeQueueProcessing(TAG);
 
 
-        if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayer + ", assetFileDescriptor " + assetFileDescriptor);
+        if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayerView + ", assetFileDescriptor " + assetFileDescriptor);
     }
 
     @Override
@@ -87,31 +87,31 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         if(SHOW_LOGS) Logger.v(TAG, "<< stopAnyPlayback, mCurrentPlayerState " + mCurrentPlayerState);
     }
 
-    private void startPlayback(VideoPlayer videoPlayer, String videoUrl) {
+    private void startPlayback(VideoPlayerView videoPlayerView, String videoUrl) {
         if(SHOW_LOGS) Logger.v(TAG, "startPlayback");
 
         mPlayerHandler.addMessages(Arrays.asList(
-                new CreateNewPlayerInstance(videoPlayer, this),
-                new SetUrlDataSourceMessage(videoPlayer, videoUrl, this),
-                new Prepare(videoPlayer, this),
-                new Start(videoPlayer, this)
+                new CreateNewPlayerInstance(videoPlayerView, this),
+                new SetUrlDataSourceMessage(videoPlayerView, videoUrl, this),
+                new Prepare(videoPlayerView, this),
+                new Start(videoPlayerView, this)
         ));
     }
 
-    private void startPlayback(VideoPlayer videoPlayer, AssetFileDescriptor assetFileDescriptor) {
+    private void startPlayback(VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor) {
         if(SHOW_LOGS) Logger.v(TAG, "startPlayback");
 
         mPlayerHandler.addMessages(Arrays.asList(
-                new CreateNewPlayerInstance(videoPlayer, this),
-                new SetAssetsDataSourceMessage(videoPlayer, assetFileDescriptor, this),
-                new Prepare(videoPlayer, this),
-                new Start(videoPlayer, this)
+                new CreateNewPlayerInstance(videoPlayerView, this),
+                new SetAssetsDataSourceMessage(videoPlayerView, assetFileDescriptor, this),
+                new Prepare(videoPlayerView, this),
+                new Start(videoPlayerView, this)
         ));
     }
 
-    private void setNewViewForPlayback(VideoPlayer videoPlayer) {
-        if(SHOW_LOGS) Logger.v(TAG, "setNewViewForPlayback, videoPlayer " + videoPlayer);
-        mPlayerHandler.addMessage(new SetNewViewForPlayback(videoPlayer, this));
+    private void setNewViewForPlayback(VideoPlayerView videoPlayerView) {
+        if(SHOW_LOGS) Logger.v(TAG, "setNewViewForPlayback, videoPlayer " + videoPlayerView);
+        mPlayerHandler.addMessage(new SetNewViewForPlayback(videoPlayerView, this));
     }
 
     private void stopCurrentPlayer() {
@@ -161,21 +161,21 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     @Override
-    public void setVideoPlayer(VideoPlayer videoPlayer) {
+    public void setVideoPlayer(VideoPlayerView videoPlayerView) {
         if(SHOW_LOGS) Logger.v(TAG, ">> setVideoPlayer");
 
-        mCurrentPlayer = videoPlayer;
+        mCurrentPlayer = videoPlayerView;
 
         if(SHOW_LOGS) Logger.v(TAG, "<< setVideoPlayer");
     }
 
     @Override
-    public void setVideoPlayerState(VideoPlayer videoPlayer, PlayerMessageState playerMessageState) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> setVideoPlayerState, playerMessageState " + playerMessageState + ", videoPlayer " + videoPlayer);
+    public void setVideoPlayerState(VideoPlayerView videoPlayerView, PlayerMessageState playerMessageState) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> setVideoPlayerState, playerMessageState " + playerMessageState + ", videoPlayer " + videoPlayerView);
 
         mCurrentPlayerState = playerMessageState;
 
-        if(SHOW_LOGS) Logger.v(TAG, "<< setVideoPlayerState, playerMessageState " + playerMessageState + ", videoPlayer " + videoPlayer);
+        if(SHOW_LOGS) Logger.v(TAG, "<< setVideoPlayerState, playerMessageState " + playerMessageState + ", videoPlayer " + videoPlayerView);
     }
 
     @Override

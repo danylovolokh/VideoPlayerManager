@@ -1,15 +1,15 @@
 package com.volokh.danylo.videolist.player;
 
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
-import com.volokh.danylo.videolist.ui.VideoPlayer;
+import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
 public class Stop extends PlayerMessage {
-    public Stop(VideoPlayer videoView, VideoPlayerManagerCallback callback) {
+    public Stop(VideoPlayerView videoView, VideoPlayerManagerCallback callback) {
         super(videoView, callback);
     }
 
     @Override
-    protected void performAction(VideoPlayer currentPlayer) {
+    protected void performAction(VideoPlayerView currentPlayer) {
         currentPlayer.stop();
     }
 

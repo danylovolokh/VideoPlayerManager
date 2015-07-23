@@ -1,16 +1,16 @@
 package com.volokh.danylo.videolist.player;
 
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
-import com.volokh.danylo.videolist.ui.VideoPlayer;
+import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
 public class CreateNewPlayerInstance extends PlayerMessage {
 
-    public CreateNewPlayerInstance(VideoPlayer videoPlayer, VideoPlayerManagerCallback callback) {
-        super(videoPlayer, callback);
+    public CreateNewPlayerInstance(VideoPlayerView videoPlayerView, VideoPlayerManagerCallback callback) {
+        super(videoPlayerView, callback);
     }
 
     @Override
-    protected void performAction(VideoPlayer currentPlayer) {
+    protected void performAction(VideoPlayerView currentPlayer) {
         currentPlayer.createNewPlayerInstance();
     }
 

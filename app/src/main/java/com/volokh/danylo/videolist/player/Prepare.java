@@ -3,7 +3,7 @@ package com.volokh.danylo.videolist.player;
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.MediaPlayerWrapper;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
-import com.volokh.danylo.videolist.ui.VideoPlayer;
+import com.volokh.danylo.videolist.ui.VideoPlayerView;
 import com.volokh.danylo.videolist.utils.Logger;
 
 public class Prepare extends PlayerMessage{
@@ -13,12 +13,12 @@ public class Prepare extends PlayerMessage{
 
     private PlayerMessageState mResultPlayerMessageState;
 
-    public Prepare(VideoPlayer videoPlayer, VideoPlayerManagerCallback callback) {
-        super(videoPlayer, callback);
+    public Prepare(VideoPlayerView videoPlayerView, VideoPlayerManagerCallback callback) {
+        super(videoPlayerView, callback);
     }
 
     @Override
-    protected void performAction(VideoPlayer currentPlayer) {
+    protected void performAction(VideoPlayerView currentPlayer) {
 
         MediaPlayerWrapper.State resultOfPrepare = currentPlayer.prepare();
         if(SHOW_LOGS) Logger.v(TAG, "resultOfPrepare " + resultOfPrepare);

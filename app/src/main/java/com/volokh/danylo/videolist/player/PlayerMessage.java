@@ -2,17 +2,17 @@ package com.volokh.danylo.videolist.player;
 
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
-import com.volokh.danylo.videolist.ui.VideoPlayer;
+import com.volokh.danylo.videolist.ui.VideoPlayerView;
 import com.volokh.danylo.videolist.utils.Logger;
 
 public abstract class PlayerMessage implements Message{
 
     private static final String TAG = PlayerMessage.class.getSimpleName();
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
-    private final VideoPlayer mCurrentPlayer;
+    private final VideoPlayerView mCurrentPlayer;
     private final VideoPlayerManagerCallback mCallback;
 
-    public PlayerMessage(VideoPlayer currentPlayer, VideoPlayerManagerCallback callback) {
+    public PlayerMessage(VideoPlayerView currentPlayer, VideoPlayerManagerCallback callback) {
         mCurrentPlayer = currentPlayer;
         mCallback = callback;
     }
@@ -42,7 +42,7 @@ public abstract class PlayerMessage implements Message{
         return getClass().getSimpleName();
     }
 
-    protected abstract void performAction(VideoPlayer currentPlayer);
+    protected abstract void performAction(VideoPlayerView currentPlayer);
     protected abstract PlayerMessageState stateBefore();
     protected abstract PlayerMessageState stateAfter();
 
