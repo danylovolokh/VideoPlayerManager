@@ -36,12 +36,9 @@ public class VideoListFragment extends Fragment{
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("ne_lyubish.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("ostanus.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4")));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Dozenemo.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("O_TORVALD_Ne_vona.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_cofe.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_kurim.mp4")));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("OE_na_nebi.mp4")));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("podaruj_svitlo.mp4")));
             mList.add(new DirectLinkVideoItem("https://duw49sogxuf9v.cloudfront.net/d/c/MlYeMAJVR21vBwdhCzE"));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -58,6 +55,6 @@ public class VideoListFragment extends Fragment{
     @Override
     public void onStop() {
         super.onStop();
-        mVideoPlayerManager.stopAnyPlayback();
+        mVideoPlayerManager.resetMediaPlayer();
     }
 }

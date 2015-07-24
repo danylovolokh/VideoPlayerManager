@@ -12,9 +12,10 @@ public class ReadyForPlaybackIndicator {
 
     private Pair<Integer, Integer> mVideoSize;
     private boolean mSurfaceTextureAvailable;
+    private boolean mFailedToPrepareUiForPlayback = false;
 
     public boolean isVideoSizeAvailable() {
-        boolean isVideoSizeAvailable = mVideoSize != null;
+        boolean isVideoSizeAvailable = mVideoSize.first != null && mVideoSize.second != null;
         if(SHOW_LOGS) Logger.v(TAG, "isVideoSizeAvailable " + isVideoSizeAvailable);
         return isVideoSizeAvailable;
     }
@@ -41,5 +42,13 @@ public class ReadyForPlaybackIndicator {
     @Override
     public String toString() {
         return getClass().getSimpleName() + isReadyForPlayback();
+    }
+
+    public void setFailedToPrepareUiForPlayback(boolean failed) {
+        mFailedToPrepareUiForPlayback = failed;
+    }
+
+    public boolean isFailedToPrepareUiForPlayback() {
+        return mFailedToPrepareUiForPlayback;
     }
 }

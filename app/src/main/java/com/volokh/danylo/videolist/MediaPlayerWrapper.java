@@ -5,6 +5,8 @@ import android.content.res.AssetFileDescriptor;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Surface;
 
 import com.volokh.danylo.videolist.utils.Logger;
@@ -30,10 +32,11 @@ public class MediaPlayerWrapper {
         IDLE, INITIALIZED, PREPARING, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, END, ERROR
     }
 
+    private final Handler mMainThreadHandler = new Handler(Looper.getMainLooper());
     private final MediaPlayer mMediaPlayer;
     private final AtomicReference<State> mState = new AtomicReference<>();
 
-    private MediaPlayerListener mListener;
+    private MainThreadMediaPlayerListener mListener;
     private VideoStateListener mVideoStateListener;
 
     private ScheduledExecutorService mPositionUpdateNotifier = Executors.newScheduledThreadPool(1);
@@ -41,8 +44,14 @@ public class MediaPlayerWrapper {
     public MediaPlayerWrapper() {
         TAG = "" + this;
         if (SHOW_LOGS) Logger.v(TAG, "constructor of MediaPlayerWrapper");
+        if (SHOW_LOGS) Logger.v(TAG, "constructor of MediaPlayerWrapper, main Looper " + Looper.getMainLooper());
+        if (SHOW_LOGS) Logger.v(TAG, "constructor of MediaPlayerWrapper, my Looper " + Looper.myLooper());
 
+        if(Looper.myLooper() != null){
+            throw new RuntimeException("myLooper not null, a bug in some MediaPlayer implementation cause that listeners are not called at all. Please use a thread without Looper");
+        }
         mMediaPlayer = new MediaPlayer();
+
         mState.set(State.IDLE);
         mMediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
         mMediaPlayer.setOnCompletionListener(mOnCompletionListener);
@@ -51,6 +60,24 @@ public class MediaPlayerWrapper {
         mMediaPlayer.setOnInfoListener(mOnInfoListener);
 
     }
+
+    private final Runnable mOnVideoPreparedMessage = new Runnable() {
+        @Override
+        public void run() {
+            if (SHOW_LOGS) Logger.v(TAG, ">> run, onVideoPreparedMainThread");
+            mListener.onVideoPreparedMainThread();
+            if (SHOW_LOGS) Logger.v(TAG, "<< run, onVideoPreparedMainThread");
+        }
+    };
+
+    private final Runnable mOnErrorWhenPreparingMessage = new Runnable() {
+        @Override
+        public void run() {
+            if (SHOW_LOGS) Logger.v(TAG, ">> run, onVideoPreparedMainThread");
+            mListener.onErrorMainThread(1, -1004); //TODO: remove magic numbers. Find a way to get actual error
+            if (SHOW_LOGS) Logger.v(TAG, "<< run, onVideoPreparedMainThread");
+        }
+    };
 
     public void prepare() {
         if (SHOW_LOGS) Logger.v(TAG, ">> prepare, mState " + mState);
@@ -64,25 +91,21 @@ public class MediaPlayerWrapper {
                         mState.set(State.PREPARED);
 
                         if (mListener != null) {
-                            mListener.onVideoPrepared();
+                            mMainThreadHandler.post(mOnVideoPreparedMessage);
                         }
 
                     } catch (IllegalStateException ex) {
-                        if (SHOW_LOGS) Logger.err(TAG, "catch exception [" + ex + "]");
-                        mState.set(State.ERROR);
-
-                        if (mListener != null) {
-                            mListener.onError(1, -1004); //TODO: remove magic numbers. Find a way to get actual error
-                        }
+                        /** we should not call {@link MediaPlayerWrapper#prepare()} in wrong state so we fall here*/
+                        throw new RuntimeException(ex);
 
                     } catch (IOException ex){
                         if (SHOW_LOGS) Logger.err(TAG, "catch IO exception [" + ex + "]");
-                        // might happen because of ost internet connection
+                        // might happen because of lost internet connection
 //                      TODO: if (SHOW_LOGS) Logger.err(TAG, "catch exception, is Network Connected [" + Utils.isNetworkConnected());
                         mState.set(State.ERROR);
 
                         if (mListener != null) {
-                            mListener.onError(1, -1004); //TODO: remove magic numbers. Find a way to get actual error
+                            mMainThreadHandler.post(mOnErrorWhenPreparingMessage);
                         }
                     }
                     break;
@@ -160,9 +183,11 @@ public class MediaPlayerWrapper {
         @Override
         public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
             if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeChanged, width " + width + ", height " + height);
-
+            if(!inUiThred()){
+                throw new RuntimeException("this should be called in Main Thread");
+            }
             if (mListener != null) {
-                mListener.onVideoSizeChanged(width, height);
+                mListener.onVideoSizeChangedMainThread(width, height);
             }
         }
     };
@@ -178,7 +203,7 @@ public class MediaPlayerWrapper {
             }
 
             if (mListener != null) {
-                mListener.onVideoCompletion();
+                mListener.onVideoCompletionMainThread();
             }
         }
     };
@@ -187,7 +212,7 @@ public class MediaPlayerWrapper {
     private final MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
-            if (SHOW_LOGS) Logger.v(TAG, "onError, what " + what + ", extra " + extra);
+            if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, what " + what + ", extra " + extra);
 
             synchronized (mState) {
                 mState.set(State.ERROR);
@@ -196,7 +221,7 @@ public class MediaPlayerWrapper {
             stopPositionUpdateNotifier();
 
             if (mListener != null) {
-                mListener.onError(what, extra);
+                mListener.onErrorMainThread(what, extra);
             }
             // We always return true, because after Error player stays in this state.
             // See here http://developer.android.com/reference/android/media/MediaPlayer.html
@@ -260,9 +285,9 @@ public class MediaPlayerWrapper {
     }
 
     /**
-     * Listener trigger 'onVideoPrepared' and `onVideoCompletion` events
+     * Listener trigger 'onVideoPreparedMainThread' and `onVideoCompletionMainThread` events
      */
-    public void setListener(MediaPlayerListener listener) {
+    public void setListener(MainThreadMediaPlayerListener listener) {
         mListener = listener;
     }
 
@@ -406,12 +431,16 @@ public class MediaPlayerWrapper {
             mMediaPlayer.setOnBufferingUpdateListener(null);
             mMediaPlayer.setOnInfoListener(null);
 
-            if (SHOW_LOGS) Logger.v(TAG, "clearAll, mSurface " + mSurface);
-            if (SHOW_LOGS) Logger.v(TAG, "clearAll, surface isValid " + mSurface.isValid());
-            if (SHOW_LOGS) Logger.v(TAG, "clearAll, >> surface release ");
-            mSurface.release();
-            if (SHOW_LOGS) Logger.v(TAG, "clearAll, << surface release, surface isValid " + mSurface.isValid());
-            mSurface = null;
+//            if(mSurface != null){
+//                if (SHOW_LOGS) Logger.v(TAG, "clearAll, mSurface " + mSurface);
+//                if (SHOW_LOGS) Logger.v(TAG, "clearAll, surface isValid " + mSurface.isValid());
+//                if (SHOW_LOGS) Logger.v(TAG, "clearAll, >> surface release ");
+//                mSurface.release();
+//                if (SHOW_LOGS) Logger.v(TAG, "clearAll, << surface release, surface isValid " + mSurface.isValid());
+//                mSurface = null;
+//            } else {
+//                if (SHOW_LOGS) Logger.w(TAG, "clearAll, mSurface was already cleared, probably by onSurfaceTextureDestroyed");
+//            }
         }
         if (SHOW_LOGS) Logger.v(TAG, "<< clearAll, mState " + mState);
     }
@@ -423,10 +452,22 @@ public class MediaPlayerWrapper {
 
     public void setSurfaceTexture(SurfaceTexture surfaceTexture) {
         if (SHOW_LOGS) Logger.v(TAG, ">> setSurfaceTexture " + surfaceTexture);
+        if (SHOW_LOGS) Logger.v(TAG, "setSurfaceTexture mSurface " + mSurface);
+
+
         if(surfaceTexture != null){
+
+//            if(mSurface != null){
+//                mSurface.release();
+//                throw new RuntimeException("not null surface"); // for debug purpouse. TODO: remove
+//            }
+
             mSurface = new Surface(surfaceTexture);
             mMediaPlayer.setSurface(mSurface);
         } else {
+//            if(mSurface != null){
+//                mSurface.release();
+//            }
             mMediaPlayer.setSurface(null);
         }
         if (SHOW_LOGS) Logger.v(TAG, "<< setSurfaceTexture " + surfaceTexture);
@@ -488,6 +529,7 @@ public class MediaPlayerWrapper {
                 case IDLE:
                 case INITIALIZED:
                 case PREPARING:
+                case ERROR:
                     duration = 0;
 
                     break;
@@ -496,7 +538,6 @@ public class MediaPlayerWrapper {
                 case PAUSED:
                 case STOPPED:
                 case PLAYBACK_COMPLETED:
-                case ERROR:
                     duration = mMediaPlayer.getDuration();
             }
         }
@@ -580,19 +621,23 @@ public class MediaPlayerWrapper {
         return getClass().getSimpleName() + "@" + hashCode();
     }
 
-    public interface MediaPlayerListener {
-        void onVideoSizeChanged(int width, int height);
+    public interface MainThreadMediaPlayerListener {
+        void onVideoSizeChangedMainThread(int width, int height);
 
-        void onVideoPrepared();
+        void onVideoPreparedMainThread();
 
-        void onVideoCompletion();
+        void onVideoCompletionMainThread();
 
-        void onError(int what, int extra);
+        void onErrorMainThread(int what, int extra);
     }
 
     public interface VideoStateListener {
         void onBufferChanged(int percent);
 
         void onVideoPlayTimeChanged(int positionInMilliseconds);
+    }
+
+    private boolean inUiThred() {
+        return Thread.currentThread().getId() == 1;
     }
 }

@@ -27,7 +27,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     private static final String TAG = SingleVideoPlayerManager.class.getSimpleName();
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
 
-    private final PlayerHandlerThread mPlayerHandler = new PlayerHandlerThread(TAG);
+    private final PlayerHandlerThread mPlayerHandler = new PlayerHandlerThread();
 
     private VideoPlayerView mCurrentPlayer = null;
     private PlayerMessageState mCurrentPlayerState = PlayerMessageState.IDLE;
@@ -87,6 +87,21 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         if(SHOW_LOGS) Logger.v(TAG, "<< stopAnyPlayback, mCurrentPlayerState " + mCurrentPlayerState);
     }
 
+    @Override
+    public void resetMediaPlayer() {
+        if(SHOW_LOGS) Logger.v(TAG, ">> resetMediaPlayer, mCurrentPlayerState " + mCurrentPlayerState);
+
+
+        mPlayerHandler.pauseQueueProcessing(TAG);
+        if (SHOW_LOGS) Logger.v(TAG, "resetMediaPlayer, mCurrentPlayerState " + mCurrentPlayerState);
+        mPlayerHandler.clearAllPendingMessages(TAG);
+        resetReleaseCurrentPlayer();
+
+        mPlayerHandler.resumeQueueProcessing(TAG);
+
+        if(SHOW_LOGS) Logger.v(TAG, "<< resetMediaPlayer, mCurrentPlayerState " + mCurrentPlayerState);
+    }
+
     private void startPlayback(VideoPlayerView videoPlayerView, String videoUrl) {
         if(SHOW_LOGS) Logger.v(TAG, "startPlayback");
 
@@ -140,6 +155,49 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
                 mPlayerHandler.addMessage(new Stop(mCurrentPlayer, this));
                 //FALL-THROUGH
 
+            case STOPPING:
+            case STOPPED:
+            case ERROR: // reset if error
+                mPlayerHandler.addMessage(new Reset(mCurrentPlayer, this));
+                //FALL-THROUGH
+            case RESETTING:
+            case RESET:
+//                mPlayerHandler.addMessage(new Release(mCurrentPlayer, this));
+                //FALL-THROUGH
+            case RELEASING:
+            case RELEASED:
+                mPlayerHandler.addMessage(new ClearPlayerInstance(mCurrentPlayer, this));
+
+                break;
+            case END:
+            case PLAYBACK_COMPLETED:
+                throw new RuntimeException("unhandled " + mCurrentPlayerState);
+        }
+    }
+
+    private void resetReleaseCurrentPlayer() {
+        if(SHOW_LOGS) Logger.v(TAG, "stopCurrentPlayer, mCurrentPlayerState " + mCurrentPlayerState +", mCurrentPlayer " + mCurrentPlayer);
+
+        switch (mCurrentPlayerState){
+            case SETTING_NEW_PLAYER:
+            case IDLE:
+
+            case CREATING_PLAYER_INSTANCE:
+            case PLAYER_INSTANCE_CREATED:
+
+            case SETTING_DATA_SOURCE:
+            case DATA_SOURCE_SET:
+
+            case CLEARING_PLAYER_INSTANCE:
+            case PLAYER_INSTANCE_CLEARED:
+                break;
+            case INITIALIZED:
+            case PREPARING:
+            case PREPARED:
+            case STARTING:
+            case STARTED:
+            case PAUSING:
+            case PAUSED:
             case STOPPING:
             case STOPPED:
             case ERROR: // reset if error

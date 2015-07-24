@@ -12,7 +12,7 @@
 
     <TextView
         android:text="TODO: set Title here"
-        android:textColor="#cccc"
+        style="@style/BaseText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"/>

@@ -68,6 +68,7 @@ public abstract class ScalableTextureView extends TextureView{
     }
 
     public void updateTextureViewSize() {
+        if (SHOW_LOGS) Logger.d(TAG, ">> updateTextureViewSize");
         if (mContentWidth == null || mContentHeight == null) {
             throw new RuntimeException("null content size");
         }
@@ -165,17 +166,17 @@ public abstract class ScalableTextureView extends TextureView{
         mPivotPointY = pivotPointY;
 
         updateMatrixScaleRotate();
+        if (SHOW_LOGS) Logger.d(TAG, "<< updateTextureViewSize");
     }
 
     private void updateMatrixScaleRotate() {
-        if (SHOW_LOGS) {
-            Logger.d(TAG, "updateMatrixScaleRotate, mContentRotation " + mContentRotation + ", mContentScaleMultiplier " + mContentScaleMultiplier + ", mPivotPointX " + mPivotPointX + ", mPivotPointY " + mPivotPointY);
-        }
+        if (SHOW_LOGS) Logger.d(TAG, ">> updateMatrixScaleRotate, mContentRotation " + mContentRotation + ", mContentScaleMultiplier " + mContentScaleMultiplier + ", mPivotPointX " + mPivotPointX + ", mPivotPointY " + mPivotPointY);
 
         mTransformMatrix.reset();
         mTransformMatrix.setScale(mContentScaleX * mContentScaleMultiplier, mContentScaleY * mContentScaleMultiplier, mPivotPointX, mPivotPointY);
         mTransformMatrix.postRotate(mContentRotation, mPivotPointX, mPivotPointY);
         setTransform(mTransformMatrix);
+        if (SHOW_LOGS) Logger.d(TAG, "<< updateMatrixScaleRotate, mContentRotation " + mContentRotation + ", mContentScaleMultiplier " + mContentScaleMultiplier + ", mPivotPointX " + mPivotPointX + ", mPivotPointY " + mPivotPointY);
     }
 
     private void updateMatrixTranslate() {

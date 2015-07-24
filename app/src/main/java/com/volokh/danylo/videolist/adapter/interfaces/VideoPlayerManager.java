@@ -8,4 +8,5 @@ public interface VideoPlayerManager {
     void playNewVideo(VideoPlayerView videoPlayerView, String videoUrl);
     void playNewVideo(VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor);
     void stopAnyPlayback();
+    void resetMediaPlayer();
 }

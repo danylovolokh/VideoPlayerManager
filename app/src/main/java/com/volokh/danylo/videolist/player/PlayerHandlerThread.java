@@ -2,7 +2,6 @@ package com.volokh.danylo.videolist.player;
 
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.utils.Logger;
-import com.volokh.danylo.videolist.visitors.Visitor;
 
 import java.util.List;
 import java.util.Queue;
@@ -13,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PlayerHandlerThread {
 
-    private final String mTag;
+    private static final String TAG = PlayerHandlerThread.class.getSimpleName();
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
 
     private final Queue<Message> mPlayerMessagesQueue = new ConcurrentLinkedQueue<>();
@@ -23,23 +22,22 @@ public class PlayerHandlerThread {
     private AtomicBoolean mTerminated = new AtomicBoolean(false); // TODO: use it
     private Message mLastMessage;
 
-    public PlayerHandlerThread(String tag) {
-        mTag = getClass().getSimpleName() + " " + tag;
+    public PlayerHandlerThread() {
         mQueueProcessingThread.execute(new Runnable() {
             @Override
             public void run() {
 
-                if (SHOW_LOGS) Logger.v(mTag, "start worker thread");
+                if (SHOW_LOGS) Logger.v(TAG, "start worker thread");
                 do {
 
-                    mQueueLock.lock(mTag);
-                    if (SHOW_LOGS) Logger.v(mTag, "mPlayerMessagesQueue " + mPlayerMessagesQueue);
+                    mQueueLock.lock(TAG);
+                    if (SHOW_LOGS) Logger.v(TAG, "mPlayerMessagesQueue " + mPlayerMessagesQueue);
 
                     if (mPlayerMessagesQueue.isEmpty()) {
                         try {
-                            if (SHOW_LOGS) Logger.v(mTag, "queue is empty, wait for new messages");
+                            if (SHOW_LOGS) Logger.v(TAG, "queue is empty, wait for new messages");
 
-                            mQueueLock.wait(mTag);
+                            mQueueLock.wait(TAG);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                             throw new RuntimeException("InterruptedException");
@@ -48,15 +46,15 @@ public class PlayerHandlerThread {
                     mLastMessage = mPlayerMessagesQueue.poll();
 
                     mLastMessage.polledFromQueue();
-                    if (SHOW_LOGS) Logger.v(mTag, "poll mLastMessage " + mLastMessage);
-                    mQueueLock.unlock(mTag);
+                    if (SHOW_LOGS) Logger.v(TAG, "poll mLastMessage " + mLastMessage);
+                    mQueueLock.unlock(TAG);
 
-                    if (SHOW_LOGS) Logger.v(mTag, "run, mLastMessage " + mLastMessage);
+                    if (SHOW_LOGS) Logger.v(TAG, "run, mLastMessage " + mLastMessage);
                     mLastMessage.runMessage();
 
-                    mQueueLock.lock(mTag);
+                    mQueueLock.lock(TAG);
                     mLastMessage.messageFinished();
-                    mQueueLock.unlock(mTag);
+                    mQueueLock.unlock(TAG);
 
                 } while (!mTerminated.get());
 
@@ -66,45 +64,49 @@ public class PlayerHandlerThread {
 
     public void addMessage(Message message){
 
-        if (SHOW_LOGS) Logger.v(mTag, ">> addMessage, lock " + message);
-        mQueueLock.lock(mTag);
+        if (SHOW_LOGS) Logger.v(TAG, ">> addMessage, lock " + message);
+        mQueueLock.lock(TAG);
 
         mPlayerMessagesQueue.add(message);
-        mQueueLock.notify(mTag);
+        mQueueLock.notify(TAG);
 
-        if (SHOW_LOGS) Logger.v(mTag, "<< addMessage, unlock " + message);
-        mQueueLock.unlock(mTag);
+        if (SHOW_LOGS) Logger.v(TAG, "<< addMessage, unlock " + message);
+        mQueueLock.unlock(TAG);
     }
 
     public void addMessages(List<PlayerMessage> messages) {
-        if (SHOW_LOGS) Logger.v(mTag, ">> addMessages, lock " + messages);
-        mQueueLock.lock(mTag);
+        if (SHOW_LOGS) Logger.v(TAG, ">> addMessages, lock " + messages);
+        mQueueLock.lock(TAG);
 
         mPlayerMessagesQueue.addAll(messages);
-        mQueueLock.notify(mTag);
+        mQueueLock.notify(TAG);
 
-        if (SHOW_LOGS) Logger.v(mTag, "<< addMessages, unlock " + messages);
-        mQueueLock.unlock(mTag);
+        if (SHOW_LOGS) Logger.v(TAG, "<< addMessages, unlock " + messages);
+        mQueueLock.unlock(TAG);
     }
 
     public void pauseQueueProcessing(String outer){
-        if (SHOW_LOGS) Logger.v(mTag, "pauseQueueProcessing, lock " + mQueueLock);
+        if (SHOW_LOGS) Logger.v(TAG, "pauseQueueProcessing, lock " + mQueueLock);
         mQueueLock.lock(outer);
     }
 
     public void resumeQueueProcessing(String outer){
-        if (SHOW_LOGS) Logger.v(mTag, "resumeQueueProcessing, unlock " + mQueueLock);
+        if (SHOW_LOGS) Logger.v(TAG, "resumeQueueProcessing, unlock " + mQueueLock);
         mQueueLock.unlock(outer);
     }
 
     public void clearAllPendingMessages(String outer) {
-        if (SHOW_LOGS) Logger.v(mTag, ">> clearAllPendingMessages, mPlayerMessagesQueue " + mPlayerMessagesQueue);
+        if (SHOW_LOGS) Logger.v(TAG, ">> clearAllPendingMessages, mPlayerMessagesQueue " + mPlayerMessagesQueue);
 
         if(mQueueLock.isLocked(outer)){
             mPlayerMessagesQueue.clear();
         } else {
             throw new RuntimeException("cannot perform action, you are not holding a lock");
         }
-        if (SHOW_LOGS) Logger.v(mTag, "<< clearAllPendingMessages, mPlayerMessagesQueue " + mPlayerMessagesQueue);
+        if (SHOW_LOGS) Logger.v(TAG, "<< clearAllPendingMessages, mPlayerMessagesQueue " + mPlayerMessagesQueue);
+    }
+
+    public void terminate(){
+        mTerminated.set(true);
     }
 }
