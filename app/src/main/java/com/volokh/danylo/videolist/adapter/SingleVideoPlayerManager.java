@@ -42,7 +42,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
 
         mPlayerHandler.clearAllPendingMessages(TAG);
 
-        stopCurrentPlayer();
+        stopResetReleaseClearCurrentPlayer();
         setNewViewForPlayback(videoPlayerView);
         startPlayback(videoPlayerView, videoUrl);
 
@@ -62,7 +62,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
 
         mPlayerHandler.clearAllPendingMessages(TAG);
 
-        stopCurrentPlayer();
+        stopResetReleaseClearCurrentPlayer();
         setNewViewForPlayback(videoPlayerView);
         startPlayback(videoPlayerView, assetFileDescriptor);
 
@@ -80,7 +80,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mPlayerHandler.pauseQueueProcessing(TAG);
         if (SHOW_LOGS) Logger.v(TAG, "stopAnyPlayback, mCurrentPlayerState " + mCurrentPlayerState);
         mPlayerHandler.clearAllPendingMessages(TAG);
-        stopCurrentPlayer();
+        stopResetReleaseClearCurrentPlayer();
 
         mPlayerHandler.resumeQueueProcessing(TAG);
 
@@ -95,7 +95,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mPlayerHandler.pauseQueueProcessing(TAG);
         if (SHOW_LOGS) Logger.v(TAG, "resetMediaPlayer, mCurrentPlayerState " + mCurrentPlayerState);
         mPlayerHandler.clearAllPendingMessages(TAG);
-        resetReleaseCurrentPlayer();
+        resetReleaseClearCurrentPlayer();
 
         mPlayerHandler.resumeQueueProcessing(TAG);
 
@@ -129,8 +129,8 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mPlayerHandler.addMessage(new SetNewViewForPlayback(videoPlayerView, this));
     }
 
-    private void stopCurrentPlayer() {
-        if(SHOW_LOGS) Logger.v(TAG, "stopCurrentPlayer, mCurrentPlayerState " + mCurrentPlayerState +", mCurrentPlayer " + mCurrentPlayer);
+    private void stopResetReleaseClearCurrentPlayer() {
+        if(SHOW_LOGS) Logger.v(TAG, "stopResetReleaseClearCurrentPlayer, mCurrentPlayerState " + mCurrentPlayerState +", mCurrentPlayer " + mCurrentPlayer);
 
         switch (mCurrentPlayerState){
             case SETTING_NEW_PLAYER:
@@ -138,9 +138,6 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
 
             case CREATING_PLAYER_INSTANCE:
             case PLAYER_INSTANCE_CREATED:
-
-            case SETTING_DATA_SOURCE:
-            case DATA_SOURCE_SET:
 
             case CLEARING_PLAYER_INSTANCE:
             case PLAYER_INSTANCE_CLEARED:
@@ -155,6 +152,10 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
                 mPlayerHandler.addMessage(new Stop(mCurrentPlayer, this));
                 //FALL-THROUGH
 
+            case SETTING_DATA_SOURCE:
+            case DATA_SOURCE_SET:
+                /** if we don't reset player in this state, will will get 0;0 from {@link android.media.MediaPlayer.OnVideoSizeChangedListener}.
+                 *  And this TextureView will never recover */
             case STOPPING:
             case STOPPED:
             case ERROR: // reset if error
@@ -162,7 +163,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
                 //FALL-THROUGH
             case RESETTING:
             case RESET:
-//                mPlayerHandler.addMessage(new Release(mCurrentPlayer, this));
+                mPlayerHandler.addMessage(new Release(mCurrentPlayer, this));
                 //FALL-THROUGH
             case RELEASING:
             case RELEASED:
@@ -175,8 +176,8 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         }
     }
 
-    private void resetReleaseCurrentPlayer() {
-        if(SHOW_LOGS) Logger.v(TAG, "stopCurrentPlayer, mCurrentPlayerState " + mCurrentPlayerState +", mCurrentPlayer " + mCurrentPlayer);
+    private void resetReleaseClearCurrentPlayer() {
+        if(SHOW_LOGS) Logger.v(TAG, "resetReleaseClearCurrentPlayer, mCurrentPlayerState " + mCurrentPlayerState +", mCurrentPlayer " + mCurrentPlayer);
 
         switch (mCurrentPlayerState){
             case SETTING_NEW_PLAYER:
