@@ -23,7 +23,9 @@ import java.io.IOException;
 /**
  * @author danylo.volokh
  */
-public class VideoPlayerView extends ScalableTextureView implements TextureView.SurfaceTextureListener{
+public class VideoPlayerView extends ScalableTextureView
+        implements TextureView.SurfaceTextureListener,
+        MediaPlayerWrapper.MainThreadMediaPlayerListener, MediaPlayerWrapper.VideoStateListener {
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
     private String TAG;
@@ -137,7 +139,8 @@ public class VideoPlayerView extends ScalableTextureView implements TextureView.
             } else {
                 if (SHOW_LOGS) Logger.v(TAG, "texture not available");
             }
-            setMediaPlayerListeners();
+            mMediaPlayer.setMainThreadMediaPlayerListener(this);
+            mMediaPlayer.setVideoStateListener(this);
         }
         if (SHOW_LOGS) Logger.v(TAG, "<< createNewPlayerInstance");
     }
@@ -254,97 +257,92 @@ public class VideoPlayerView extends ScalableTextureView implements TextureView.
         mMediaPlayerListenerMainThread = listener;
     }
 
-    private void setMediaPlayerListeners() {
-        if (SHOW_LOGS) Logger.v(TAG, ">> setMediaPlayerListeners");
+    @Override
+    public void onVideoSizeChangedMainThread(int width, int height) {
 
-        synchronized (mReadyForPlaybackIndicator){
-            mMediaPlayer.setListener(new MediaPlayerWrapper.MainThreadMediaPlayerListener() {
+        if (SHOW_LOGS) Logger.v(TAG, ">> onVideoSizeChangedMainThread, width " + width + ", height " + height);
+
+        if (width  != 0 && height != 0) {
+            setContentWidth(width);
+            setContentHeight(height);
+
+            onVideoSizeAvailable();
+        } else {
+            if (SHOW_LOGS) Logger.w(TAG, "onVideoSizeChangedMainThread, size 0. Probably will be unable to start video");
+
+            synchronized (mReadyForPlaybackIndicator){
+                mReadyForPlaybackIndicator.setFailedToPrepareUiForPlayback(true);
+                mReadyForPlaybackIndicator.notifyAll();
+            }
+        }
+
+        if (mMediaPlayerListenerMainThread != null) {
+            mMediaPlayerListenerMainThread.onVideoSizeChangedMainThread(width, height);
+        }
+
+        if (SHOW_LOGS) Logger.v(TAG, "<< onVideoSizeChangedMainThread, width " + width + ", height " + height);
+    }
+
+    private final Runnable mVideoCompletionBackgroundThreadRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mMediaPlayerListenerBackgroundThread.onVideoSizeChangedBackgroundThread(getContentHeight(), getContentWidth());
+        }
+    };
+
+    @Override
+    public void onVideoCompletionMainThread() {
+        if (mMediaPlayerListenerMainThread != null) {
+            mMediaPlayerListenerMainThread.onVideoCompletionMainThread();
+        }
+        if (mMediaPlayerListenerBackgroundThread != null) {
+            mViewHandlerBackgroundThread.post(mVideoCompletionBackgroundThreadRunnable);
+        }
+    }
+
+    private final Runnable mVideoPreparedBackgroundThreadRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mMediaPlayerListenerBackgroundThread.onVideoPreparedBackgroundThread();
+        }
+    };
+
+    @Override
+    public void onVideoPreparedMainThread() {
+        if (mMediaPlayerListenerMainThread != null) {
+            mMediaPlayerListenerMainThread.onVideoPreparedMainThread();
+        }
+        if (mMediaPlayerListenerBackgroundThread != null) {
+            mViewHandlerBackgroundThread.post(mVideoPreparedBackgroundThreadRunnable);
+        }
+    }
+
+    @Override
+    public void onErrorMainThread(final int what, final int extra) {
+        if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, this " + VideoPlayerView.this);
+        switch (what) {
+            case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
+                if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, what MEDIA_ERROR_SERVER_DIED");
+                printErrorExtra(extra);
+                break;
+            case MediaPlayer.MEDIA_ERROR_UNKNOWN:
+                if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, what MEDIA_ERROR_UNKNOWN");
+                printErrorExtra(extra);
+                break;
+        }
+        if (mMediaPlayerListenerBackgroundThread != null) {
+            mViewHandlerBackgroundThread.post(new Runnable() {
                 @Override
-                public void onVideoSizeChangedMainThread(int width, int height) {
-
-                    if (SHOW_LOGS) Logger.v(TAG, ">> onVideoSizeChangedMainThread, width " + width + ", height " + height);
-
-                    if (width  != 0 && height != 0) {
-                        setContentWidth(width);
-                        setContentHeight(height);
-
-                        onVideoSizeAvailable();
-                    } else {
-                        if (SHOW_LOGS) Logger.w(TAG, "onVideoSizeChangedMainThread, size 0. Probably will be unable to start video");
-                        // TODO: notify outside world about this event to do something with this. Practice shows that waiting for a ~60 sec sometimes will cause this bug to dissapear on Samsung Note 4
-                        synchronized (mReadyForPlaybackIndicator){
-                            mReadyForPlaybackIndicator.setFailedToPrepareUiForPlayback(true);
-                            mReadyForPlaybackIndicator.notifyAll();
-                        }
-                    }
-
-                    if (mMediaPlayerListenerMainThread != null) {
-                        mMediaPlayerListenerMainThread.onVideoSizeChangedMainThread(width, height);
-                    }
-
-                    if (SHOW_LOGS) Logger.v(TAG, "<< onVideoSizeChangedMainThread, width " + width + ", height " + height);
-                }
-
-                private final Runnable mVideoCompletionBackgroundThreadRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        mMediaPlayerListenerBackgroundThread.onVideoSizeChangedBackgroundThread(getContentHeight(), getContentWidth());
-                    }
-                };
-
-                @Override
-                public void onVideoCompletionMainThread() {
-                    if (mMediaPlayerListenerMainThread != null) {
-                        mMediaPlayerListenerMainThread.onVideoCompletionMainThread();
-                    }
-                    if (mMediaPlayerListenerBackgroundThread != null) {
-                        mViewHandlerBackgroundThread.post(mVideoCompletionBackgroundThreadRunnable);
-                    }
-                }
-
-                private final Runnable mVideoPreparedBackgroundThreadRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        mMediaPlayerListenerBackgroundThread.onVideoPreparedBackgroundThread();
-                    }
-                };
-
-                @Override
-                public void onVideoPreparedMainThread() {
-                    if (mMediaPlayerListenerMainThread != null) {
-                        mMediaPlayerListenerMainThread.onVideoPreparedMainThread();
-                    }
-                    if (mMediaPlayerListenerBackgroundThread != null) {
-                        mViewHandlerBackgroundThread.post(mVideoPreparedBackgroundThreadRunnable);
-                    }
-                }
-
-                @Override
-                public void onErrorMainThread(final int what, final int extra) {
-                    if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, this " + VideoPlayerView.this);
-                    switch (what) {
-                        case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-                            if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, what MEDIA_ERROR_SERVER_DIED");
-                            printErrorExtra(extra);
-                            break;
-                        case MediaPlayer.MEDIA_ERROR_UNKNOWN:
-                            if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, what MEDIA_ERROR_UNKNOWN");
-                            printErrorExtra(extra);
-                            break;
-                    }
-                    if (mMediaPlayerListenerBackgroundThread != null) {
-                        mViewHandlerBackgroundThread.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                mMediaPlayerListenerBackgroundThread.onErrorBackgroundThread(what, extra);
-                            }
-                        });
-                    }
+                public void run() {
+                    mMediaPlayerListenerBackgroundThread.onErrorBackgroundThread(what, extra);
                 }
             });
-            mMediaPlayer.setVideoStateListener(mVideoStateListener);
         }
-        if (SHOW_LOGS) Logger.v(TAG, "<< setMediaPlayerListeners");
+    }
+
+    @Override
+    public void onBufferingUpdateMainThread(int percent) {
+
     }
 
     private void printErrorExtra(int extra) {
@@ -364,34 +362,36 @@ public class VideoPlayerView extends ScalableTextureView implements TextureView.
         }
     }
 
+    private final Runnable mVideoSizeAvailableRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (SHOW_LOGS) Logger.v(TAG, ">> run, onVideoSizeAvailable");
+
+            synchronized (mReadyForPlaybackIndicator) {
+                if (SHOW_LOGS)
+                    Logger.v(TAG, "onVideoSizeAvailable, mReadyForPlaybackIndicator " + mReadyForPlaybackIndicator);
+
+                mReadyForPlaybackIndicator.setVideoSize(getContentHeight(), getContentWidth());
+
+                if (mReadyForPlaybackIndicator.isReadyForPlayback()) {
+                    if (SHOW_LOGS) Logger.v(TAG, "run, onVideoSizeAvailable, notifyAll");
+
+                    mReadyForPlaybackIndicator.notifyAll();
+                }
+                if (SHOW_LOGS) Logger.v(TAG, "<< run, onVideoSizeAvailable");
+            }
+            if (mMediaPlayerListenerBackgroundThread != null) {
+                mMediaPlayerListenerBackgroundThread.onVideoSizeChangedBackgroundThread(getContentHeight(), getContentWidth());
+            }
+        }
+    };
+
     private void onVideoSizeAvailable() {
         if (SHOW_LOGS) Logger.v(TAG, ">> onVideoSizeAvailable");
 
         updateTextureViewSize();
 
-        mViewHandlerBackgroundThread.post(new Runnable() {
-            @Override
-            public void run() {
-                if (SHOW_LOGS) Logger.v(TAG, ">> run, onVideoSizeAvailable");
-
-                synchronized (mReadyForPlaybackIndicator) {
-                    if (SHOW_LOGS)
-                        Logger.v(TAG, "onVideoSizeAvailable, mReadyForPlaybackIndicator " + mReadyForPlaybackIndicator);
-
-                    mReadyForPlaybackIndicator.setVideoSize(getContentHeight(), getContentWidth());
-
-                    if (mReadyForPlaybackIndicator.isReadyForPlayback()) {
-                        if (SHOW_LOGS) Logger.v(TAG, "run, onVideoSizeAvailable, notifyAll");
-
-                        mReadyForPlaybackIndicator.notifyAll();
-                    }
-                    if (SHOW_LOGS) Logger.v(TAG, "<< run, onVideoSizeAvailable");
-                }
-                if (mMediaPlayerListenerBackgroundThread != null) {
-                    mMediaPlayerListenerBackgroundThread.onVideoSizeChangedBackgroundThread(getContentHeight(), getContentWidth());
-                }
-            }
-        });
+        mViewHandlerBackgroundThread.post(mVideoSizeAvailableRunnable);
 
         if (SHOW_LOGS) Logger.v(TAG, "<< onVideoSizeAvailable");
     }
@@ -495,11 +495,6 @@ public class VideoPlayerView extends ScalableTextureView implements TextureView.
                 synchronized (mReadyForPlaybackIndicator) {
                     mReadyForPlaybackIndicator.setSurfaceTextureAvailable(false);
 
-//                    if(mMediaPlayer != null){
-//                        mMediaPlayer.setSurfaceTexture(null);
-//                    } else {
-//                        if (SHOW_LOGS) Logger.v(TAG, "onSurfaceTextureDestroyed, mMediaPlayer is already null, cannot perform any operations");
-//                    }
                     /** we have to notify a Thread may be in wait() state in {@link com.volokh.danylo.videolist.ui.VideoPlayerView#start()} method*/
                     mReadyForPlaybackIndicator.notifyAll();
                 }
@@ -522,6 +517,11 @@ public class VideoPlayerView extends ScalableTextureView implements TextureView.
 
     public interface PlaybackStartedListener {
         void onPlaybackStarted();
+    }
+
+    @Override
+    public void onVideoPlayTimeChanged(int positionInMilliseconds) {
+
     }
 
     @Override
@@ -565,7 +565,7 @@ public class VideoPlayerView extends ScalableTextureView implements TextureView.
         if (SHOW_LOGS) Logger.v(TAG, "<< onVisibilityChanged");
     }
 
-    private String visibilityStr(int visibility) {
+    private static String visibilityStr(int visibility) {
         switch (visibility){
             case View.VISIBLE:
                 return "VISIBLE";

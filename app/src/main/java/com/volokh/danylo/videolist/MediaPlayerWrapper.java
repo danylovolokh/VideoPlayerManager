@@ -19,17 +19,32 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MediaPlayerWrapper {
+public class MediaPlayerWrapper
+        implements MediaPlayer.OnErrorListener,
+        MediaPlayer.OnBufferingUpdateListener,
+        MediaPlayer.OnInfoListener,
+        MediaPlayer.OnCompletionListener,
+        MediaPlayer.OnVideoSizeChangedListener
+{
 
     private String TAG;
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
 
-    public static final int POSITION_UPDATE_NOTIFYING_PERIOD = 100;         // milliseconds
+    public static final int POSITION_UPDATE_NOTIFYING_PERIOD = 1000;         // milliseconds
     private ScheduledFuture<?> mFuture;
     private Surface mSurface;
 
     public enum State {
-        IDLE, INITIALIZED, PREPARING, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, END, ERROR
+        IDLE,
+        INITIALIZED,
+        PREPARING,
+        PREPARED,
+        STARTED,
+        PAUSED,
+        STOPPED,
+        PLAYBACK_COMPLETED,
+        END,
+        ERROR
     }
 
     private final Handler mMainThreadHandler = new Handler(Looper.getMainLooper());
@@ -53,12 +68,11 @@ public class MediaPlayerWrapper {
         mMediaPlayer = new MediaPlayer();
 
         mState.set(State.IDLE);
-        mMediaPlayer.setOnVideoSizeChangedListener(mOnVideoSizeChangedListener);
-        mMediaPlayer.setOnCompletionListener(mOnCompletionListener);
-        mMediaPlayer.setOnErrorListener(mOnErrorListener);
-        mMediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
-        mMediaPlayer.setOnInfoListener(mOnInfoListener);
-
+        mMediaPlayer.setOnVideoSizeChangedListener(this);
+        mMediaPlayer.setOnCompletionListener(this);
+        mMediaPlayer.setOnErrorListener(this);
+        mMediaPlayer.setOnBufferingUpdateListener(this);
+        mMediaPlayer.setOnInfoListener(this);
     }
 
     private final Runnable mOnVideoPreparedMessage = new Runnable() {
@@ -66,15 +80,6 @@ public class MediaPlayerWrapper {
         public void run() {
             if (SHOW_LOGS) Logger.v(TAG, ">> run, onVideoPreparedMainThread");
             mListener.onVideoPreparedMainThread();
-            if (SHOW_LOGS) Logger.v(TAG, "<< run, onVideoPreparedMainThread");
-        }
-    };
-
-    private final Runnable mOnErrorWhenPreparingMessage = new Runnable() {
-        @Override
-        public void run() {
-            if (SHOW_LOGS) Logger.v(TAG, ">> run, onVideoPreparedMainThread");
-            mListener.onErrorMainThread(1, -1004); //TODO: remove magic numbers. Find a way to get actual error
             if (SHOW_LOGS) Logger.v(TAG, "<< run, onVideoPreparedMainThread");
         }
     };
@@ -99,14 +104,7 @@ public class MediaPlayerWrapper {
                         throw new RuntimeException(ex);
 
                     } catch (IOException ex){
-                        if (SHOW_LOGS) Logger.err(TAG, "catch IO exception [" + ex + "]");
-                        // might happen because of lost internet connection
-//                      TODO: if (SHOW_LOGS) Logger.err(TAG, "catch exception, is Network Connected [" + Utils.isNetworkConnected());
-                        mState.set(State.ERROR);
-
-                        if (mListener != null) {
-                            mMainThreadHandler.post(mOnErrorWhenPreparingMessage);
-                        }
+                        onPrepareError(ex);
                     }
                     break;
                 case IDLE:
@@ -121,6 +119,30 @@ public class MediaPlayerWrapper {
             }
         }
         if (SHOW_LOGS) Logger.v(TAG, "<< prepare, mState " + mState);
+    }
+
+    /**
+     * This method propagates error when {@link IOException} is thrown during synchronous {@link #prepare()}
+     * @param ex
+     */
+    private void onPrepareError(IOException ex) {
+        if (SHOW_LOGS) Logger.err(TAG, "catch IO exception [" + ex + "]");
+        // might happen because of lost internet connection
+//      TODO: if (SHOW_LOGS) Logger.err(TAG, "catch exception, is Network Connected [" + Utils.isNetworkConnected());
+        mState.set(State.ERROR);
+        if(mListener != null){
+            mListener.onErrorMainThread(1, -1004); //TODO: remove magic numbers. Find a way to get actual error
+        }
+        if (mListener != null) {
+            mMainThreadHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (SHOW_LOGS) Logger.v(TAG, ">> run, onVideoPreparedMainThread");
+                    mListener.onErrorMainThread(1, -1004); //TODO: remove magic numbers. Find a way to get actual error
+                    if (SHOW_LOGS) Logger.v(TAG, "<< run, onVideoPreparedMainThread");
+                }
+            });
+        }
     }
 
     /**
@@ -178,76 +200,61 @@ public class MediaPlayerWrapper {
         }
     }
 
-    // TODO: use this instead
-    private final MediaPlayer.OnVideoSizeChangedListener mOnVideoSizeChangedListener = new MediaPlayer.OnVideoSizeChangedListener() {
-        @Override
-        public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-            if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeChanged, width " + width + ", height " + height);
-            if(!inUiThred()){
-                throw new RuntimeException("this should be called in Main Thread");
-            }
-            if (mListener != null) {
-                mListener.onVideoSizeChangedMainThread(width, height);
-            }
+    @Override
+    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+        if (SHOW_LOGS) Logger.v(TAG, "onVideoSizeChanged, width " + width + ", height " + height);
+        if(!inUiThread()){
+            throw new RuntimeException("this should be called in Main Thread");
         }
-    };
-
-    // TODO: use this instead
-    private final MediaPlayer.OnCompletionListener mOnCompletionListener = new MediaPlayer.OnCompletionListener() {
-        @Override
-        public void onCompletion(MediaPlayer mp) {
-            if (SHOW_LOGS) Logger.v(TAG, "onVideoCompletion, mState " + mState);
-
-            synchronized (mState) {
-                mState.set(State.PLAYBACK_COMPLETED);
-            }
-
-            if (mListener != null) {
-                mListener.onVideoCompletionMainThread();
-            }
+        if (mListener != null) {
+            mListener.onVideoSizeChangedMainThread(width, height);
         }
-    };
+    }
 
-    // TODO: use this instead
-    private final MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
-        @Override
-        public boolean onError(MediaPlayer mp, int what, int extra) {
-            if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, what " + what + ", extra " + extra);
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        if (SHOW_LOGS) Logger.v(TAG, "onVideoCompletion, mState " + mState);
 
-            synchronized (mState) {
-                mState.set(State.ERROR);
-            }
-
-            stopPositionUpdateNotifier();
-
-            if (mListener != null) {
-                mListener.onErrorMainThread(what, extra);
-            }
-            // We always return true, because after Error player stays in this state.
-            // See here http://developer.android.com/reference/android/media/MediaPlayer.html
-            return true;
+        synchronized (mState) {
+            mState.set(State.PLAYBACK_COMPLETED);
         }
-    };
 
-    // TODO: use this instead
-    private final MediaPlayer.OnBufferingUpdateListener mOnBufferingUpdateListener = new MediaPlayer.OnBufferingUpdateListener() {
-        @Override
-        public void onBufferingUpdate(MediaPlayer mp, int percent) {
-            if (mVideoStateListener != null) {
-                mVideoStateListener.onBufferChanged(percent);
-            }
+        if (mListener != null) {
+            mListener.onVideoCompletionMainThread();
         }
-    };
+    }
 
-    // TODO: use this instead
-    private final MediaPlayer.OnInfoListener mOnInfoListener = new MediaPlayer.OnInfoListener() {
-        @Override
-        public boolean onInfo(MediaPlayer mp, int what, int extra) {
-            if (SHOW_LOGS) Logger.v(TAG, "onInfo");
-            printInfo(what);
-            return false;
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra) {
+        if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, what " + what + ", extra " + extra);
+
+        synchronized (mState) {
+            mState.set(State.ERROR);
         }
-    };
+
+        stopPositionUpdateNotifier();
+
+        if (mListener != null) {
+            mListener.onErrorMainThread(what, extra);
+        }
+        // We always return true, because after Error player stays in this state.
+        // See here http://developer.android.com/reference/android/media/MediaPlayer.html
+        return true;
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+        if (mListener != null) {
+            mListener.onBufferingUpdateMainThread(percent);
+        }
+    }
+
+    @Override
+    public boolean onInfo(MediaPlayer mp, int what, int extra) {
+        if (SHOW_LOGS) Logger.v(TAG, "onInfo");
+        printInfo(what);
+        return false;
+    }
 
     private void printInfo(int what) {
         switch (what) {
@@ -287,7 +294,7 @@ public class MediaPlayerWrapper {
     /**
      * Listener trigger 'onVideoPreparedMainThread' and `onVideoCompletionMainThread` events
      */
-    public void setListener(MainThreadMediaPlayerListener listener) {
+    public void setMainThreadMediaPlayerListener(MainThreadMediaPlayerListener listener) {
         mListener = listener;
     }
 
@@ -430,17 +437,6 @@ public class MediaPlayerWrapper {
             mMediaPlayer.setOnErrorListener(null);
             mMediaPlayer.setOnBufferingUpdateListener(null);
             mMediaPlayer.setOnInfoListener(null);
-
-//            if(mSurface != null){
-//                if (SHOW_LOGS) Logger.v(TAG, "clearAll, mSurface " + mSurface);
-//                if (SHOW_LOGS) Logger.v(TAG, "clearAll, surface isValid " + mSurface.isValid());
-//                if (SHOW_LOGS) Logger.v(TAG, "clearAll, >> surface release ");
-//                mSurface.release();
-//                if (SHOW_LOGS) Logger.v(TAG, "clearAll, << surface release, surface isValid " + mSurface.isValid());
-//                mSurface = null;
-//            } else {
-//                if (SHOW_LOGS) Logger.w(TAG, "clearAll, mSurface was already cleared, probably by onSurfaceTextureDestroyed");
-//            }
         }
         if (SHOW_LOGS) Logger.v(TAG, "<< clearAll, mState " + mState);
     }
@@ -456,18 +452,9 @@ public class MediaPlayerWrapper {
 
 
         if(surfaceTexture != null){
-
-//            if(mSurface != null){
-//                mSurface.release();
-//                throw new RuntimeException("not null surface"); // for debug purpouse. TODO: remove
-//            }
-
             mSurface = new Surface(surfaceTexture);
             mMediaPlayer.setSurface(mSurface);
         } else {
-//            if(mSurface != null){
-//                mSurface.release();
-//            }
             mMediaPlayer.setSurface(null);
         }
         if (SHOW_LOGS) Logger.v(TAG, "<< setSurfaceTexture " + surfaceTexture);
@@ -572,16 +559,18 @@ public class MediaPlayerWrapper {
         }
     }
 
+    private final Runnable mNotifyPositionUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            notifyPositionUpdated();
+        }
+    };
+
     private void startPositionUpdateNotifier() {
         if (SHOW_LOGS)
             Logger.v(TAG, "startPositionUpdateNotifier, mPositionUpdateNotifier " + mPositionUpdateNotifier);
             mFuture = mPositionUpdateNotifier.scheduleAtFixedRate(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            notifyPositionUpdated();
-                        }
-                    },
+                    mNotifyPositionUpdateRunnable,
                     0,
                     POSITION_UPDATE_NOTIFYING_PERIOD,
                     TimeUnit.MILLISECONDS);
@@ -629,15 +618,15 @@ public class MediaPlayerWrapper {
         void onVideoCompletionMainThread();
 
         void onErrorMainThread(int what, int extra);
+
+        void onBufferingUpdateMainThread(int percent);
     }
 
     public interface VideoStateListener {
-        void onBufferChanged(int percent);
-
         void onVideoPlayTimeChanged(int positionInMilliseconds);
     }
 
-    private boolean inUiThred() {
+    private boolean inUiThread() {
         return Thread.currentThread().getId() == 1;
     }
 }
