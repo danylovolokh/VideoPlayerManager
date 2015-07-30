@@ -3,8 +3,7 @@ package com.volokh.danylo.videolist.adapter.interfaces;
 import com.volokh.danylo.videolist.player.PlayerMessageState;
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
-public interface VideoPlayerManagerCallback {
-    void setVideoPlayer(VideoPlayerView videoPlayerView);
+public interface VideoPlayerManagerCallback extends SetViewCallback<VideoPlayerView> {
 
     void setVideoPlayerState(VideoPlayerView videoPlayerView, PlayerMessageState playerMessageState);
 

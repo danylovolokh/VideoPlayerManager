@@ -1,8 +1,10 @@
 package com.volokh.danylo.videolist.adapter;
 
 import android.content.res.AssetFileDescriptor;
+import android.view.View;
 
 import com.volokh.danylo.videolist.Config;
+import com.volokh.danylo.videolist.adapter.interfaces.SetViewCallback;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
 import com.volokh.danylo.videolist.player.ClearPlayerInstance;
@@ -28,9 +30,14 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
 
     private final PlayerHandlerThread mPlayerHandler = new PlayerHandlerThread();
+    private final SetViewCallback<View> mSetVideoPlayerCallback;
 
     private VideoPlayerView mCurrentPlayer = null;
     private PlayerMessageState mCurrentPlayerState = PlayerMessageState.IDLE;
+
+    public SingleVideoPlayerManager(SetViewCallback<View> setVideoPlayerCallback) {
+        mSetVideoPlayerCallback = setVideoPlayerCallback;
+    }
 
     @Override
     public void playNewVideo(VideoPlayerView videoPlayerView, String videoUrl) {
@@ -220,12 +227,13 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     @Override
-    public void setVideoPlayer(VideoPlayerView videoPlayerView) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> setVideoPlayer");
+    public void setView(VideoPlayerView videoPlayerView) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> setView");
 
         mCurrentPlayer = videoPlayerView;
+        mSetVideoPlayerCallback.setView(videoPlayerView);
 
-        if(SHOW_LOGS) Logger.v(TAG, "<< setVideoPlayer");
+        if(SHOW_LOGS) Logger.v(TAG, "<< setView");
     }
 
     @Override

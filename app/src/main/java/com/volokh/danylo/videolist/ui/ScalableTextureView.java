@@ -256,11 +256,11 @@ public abstract class ScalableTextureView extends TextureView{
         updateMatrixTranslate();
     }
 
-    public final float getContentX() {
+    protected final float getContentX() {
         return mContentX;
     }
 
-    public final float getContentY() {
+    protected final float getContentY() {
         return mContentY;
     }
 

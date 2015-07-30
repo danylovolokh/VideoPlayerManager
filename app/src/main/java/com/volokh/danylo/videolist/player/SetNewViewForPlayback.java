@@ -21,7 +21,7 @@ public class SetNewViewForPlayback extends PlayerMessage {
 
     @Override
     protected void performAction(VideoPlayerView currentPlayer) {
-        mCallback.setVideoPlayer(mCurrentPlayer);
+        mCallback.setView(mCurrentPlayer);
     }
 
     @Override

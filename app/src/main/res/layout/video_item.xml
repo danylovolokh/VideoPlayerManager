@@ -5,16 +5,28 @@
     android:layout_height="0dp"
     android:background="@color/video_thumbnail_placeholder_color">
 
+    <TextView
+        android:text="visibility = 68%"
+        android:id="@+id/percentage_top"
+        style="@style/BaseText"
+        android:layout_alignParentTop="true"/>
+
     <com.volokh.danylo.videolist.ui.VideoPlayerView
         android:id="@+id/player"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
 
     <TextView
-        android:text="TODO: set Title here"
+        android:text="visibility = 67%"
+        android:id="@+id/percentage_bottom"
         style="@style/BaseText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"/>
+
+    <TextView
+        android:text="Title"
+        android:id="@+id/title"
+        style="@style/BaseText"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/percentage_bottom"/>
 
 </RelativeLayout>
