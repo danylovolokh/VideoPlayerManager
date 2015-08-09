@@ -16,7 +16,7 @@ public class DirectLinkVideoItem extends BaseVideoItem {
     @Override
     public View update(View view, VideoPlayerManager videoPlayerManager) {
         VideoViewHolder viewHolder = (VideoViewHolder) view.getTag();
-        videoPlayerManager.playNewVideo(viewHolder.mPlayer, mDirectUrl);
+        videoPlayerManager.playNewVideo(viewHolder.mPlayer, mDirectUrl, viewHolder.mListItemView);
         return view;
     }
 }

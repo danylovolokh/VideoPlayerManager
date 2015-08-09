@@ -40,7 +40,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     @Override
-    public void playNewVideo(VideoPlayerView videoPlayerView, String videoUrl) {
+    public void playNewVideo(VideoPlayerView videoPlayerView, String videoUrl, View listItemView) {
         if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayerView + ", mCurrentPlayer " + mCurrentPlayer + ", videoUrl " + videoUrl);
 
 
@@ -50,7 +50,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mPlayerHandler.clearAllPendingMessages(TAG);
 
         stopResetReleaseClearCurrentPlayer();
-        setNewViewForPlayback(videoPlayerView);
+        setNewViewForPlayback(videoPlayerView, listItemView);
         startPlayback(videoPlayerView, videoUrl);
 
         mPlayerHandler.resumeQueueProcessing(TAG);
@@ -59,7 +59,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     @Override
-    public void playNewVideo(VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor) {
+    public void playNewVideo(VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor, View listItemView) {
         if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayerView + ", mCurrentPlayer " + mCurrentPlayer + ", assetFileDescriptor " + assetFileDescriptor);
 
         mPlayerHandler.pauseQueueProcessing(TAG);
@@ -70,7 +70,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mPlayerHandler.clearAllPendingMessages(TAG);
 
         stopResetReleaseClearCurrentPlayer();
-        setNewViewForPlayback(videoPlayerView);
+        setNewViewForPlayback(videoPlayerView, listItemView);
         startPlayback(videoPlayerView, assetFileDescriptor);
 
         mPlayerHandler.resumeQueueProcessing(TAG);
@@ -131,9 +131,9 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         ));
     }
 
-    private void setNewViewForPlayback(VideoPlayerView videoPlayerView) {
+    private void setNewViewForPlayback(VideoPlayerView videoPlayerView, View listItemView) {
         if(SHOW_LOGS) Logger.v(TAG, "setNewViewForPlayback, videoPlayer " + videoPlayerView);
-        mPlayerHandler.addMessage(new SetNewViewForPlayback(videoPlayerView, this));
+        mPlayerHandler.addMessage(new SetNewViewForPlayback(videoPlayerView, listItemView, this));
     }
 
     private void stopResetReleaseClearCurrentPlayer() {
@@ -227,11 +227,11 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     @Override
-    public void setView(VideoPlayerView videoPlayerView) {
+    public void setView(VideoPlayerView videoPlayerView, View listItemView) {
         if(SHOW_LOGS) Logger.v(TAG, ">> setView");
 
         mCurrentPlayer = videoPlayerView;
-        mSetVideoPlayerCallback.setView(videoPlayerView);
+        mSetVideoPlayerCallback.setView(videoPlayerView, listItemView);
 
         if(SHOW_LOGS) Logger.v(TAG, "<< setView");
     }

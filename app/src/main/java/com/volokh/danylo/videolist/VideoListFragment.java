@@ -36,6 +36,8 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        mVideoVisibilityCalculator.setEnclosureTopBottom(getActivity().getResources().getDisplayMetrics().heightPixels, 0);
+
         try {
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("DZIDZIO.mp4")));
@@ -47,7 +49,6 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("O_TORVALD_Ne_vona.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_cofe.mp4")));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_kurim.mp4")));
 //            mList.add(new DirectLinkVideoItem("https://duw49sogxuf9v.cloudfront.net/d/c/MlYeMAJVR21vBwdhCzE"));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("DZIDZIO.mp4")));
@@ -59,7 +60,6 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("O_TORVALD_Ne_vona.mp4")));
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_cofe.mp4")));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_kurim.mp4")));
 //            mList.add(new DirectLinkVideoItem("https://duw49sogxuf9v.cloudfront.net/d/c/MlYeMAJVR21vBwdhCzE"));
         } catch (IOException e) {
             throw new RuntimeException(e);

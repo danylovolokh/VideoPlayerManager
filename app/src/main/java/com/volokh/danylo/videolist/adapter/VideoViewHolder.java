@@ -8,8 +8,10 @@ import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
 public class VideoViewHolder{
     public final VideoPlayerView mPlayer;
+    public final View mListItemView;
 
     public VideoViewHolder(View view) {
+        mListItemView = view;
         mPlayer = (VideoPlayerView) view.findViewById(R.id.player);
     }
 }

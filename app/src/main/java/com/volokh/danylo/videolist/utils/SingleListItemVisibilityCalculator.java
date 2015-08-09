@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A utility that tracks current {@link com.volokh.danylo.videolist.adapter.items.ListItem} visibility.
- * Current ListItem is an item defined from outside by calling {@link #setView(android.view.View)}.
+ * Current ListItem is an item defined from outside by calling {@link com.volokh.danylo.videolist.adapter.interfaces.SetViewCallback#setView(android.view.View, android.view.View)}.
  *
  * If current view is null this class just do nothing.
  * The logic is following : when current view is going out of screen (up or down) by {@link #CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS} or more then it becomes "Ready to become not current".
@@ -36,6 +36,11 @@ public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCa
     private ScrollDirectionDetector.ScrollDirection mScrollDirection;
     private final AtomicReference<View> mCurrentView = new AtomicReference<>();
 
+    private int mEnclosureTop;
+    private int mEnclosureBottom;
+
+    private boolean mCurrentViewInvisibleReady;
+
     public SingleListItemVisibilityCalculator(Callback callback, ArrayList<? extends ListItem> listItems) {
         mCallback = callback;
         mListItems = listItems;
@@ -46,24 +51,78 @@ public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCa
     }
 
     @Override
-    public void calculateItemsVisibility(AbsListView view, int firstVisibleItem, int visibleItemCount, int scrollState/*TODO: add current item here. start tracking from it*/) {
+    public void calculateItemsVisibility(AbsListView listView, int firstVisibleItem, int visibleItemCount, int scrollState/*TODO: add current item here. start tracking from it*/) {
         if(SHOW_LOGS) Logger.v(TAG, ">> calculateItemsVisibility");
 
         if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, firstVisibleItem " + firstVisibleItem + ", visibleItemCount " + visibleItemCount + ", scrollState " + scrollStateStr(scrollState));
-        mScrollDirectionDetector.onDetectedListScroll(view, firstVisibleItem);
+        mScrollDirectionDetector.onDetectedListScroll(listView, firstVisibleItem);
 
         if(scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL){
+            View currentView = mCurrentView.get();
+            Rect currentViewRect = new Rect();
+            currentView.getLocalVisibleRect(currentViewRect);
+
+            if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, mScrollDirection " + mScrollDirection);
+            if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, mEnclosureTop " + mEnclosureTop + ", mEnclosureBottom " + mEnclosureBottom + ", rect " + currentViewRect);
+
             switch (mScrollDirection){
                 case UP:
+
+                    break;
                 case DOWN:
-                    View currentView = mCurrentView.get();
-                    Rect rect = new Rect();
-                    currentView.getLocalVisibleRect(rect);
-                    if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, rect " + rect);
+
+                    calcCurrentViewVisibility(currentView, currentViewRect);
+
+                    int indexOfCurrentView = listView.indexOfChild(currentView);
+                    if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, indexOfCurrentView " + indexOfCurrentView);
+
+                    View nextView = listView.getChildAt(indexOfCurrentView + 1);
+                    if(nextView != null){
+                        calcNextViewVisibility(nextView);
+                    } else {
+                        if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, nextView null");
+                    }
                     break;
             }
         }
         if(SHOW_LOGS) Logger.v(TAG, "<< calculateItemsVisibility");
+    }
+
+    private void calcNextViewVisibility(View nextView) {
+        if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, mEnclosureBottom " + mEnclosureBottom);
+
+        Rect nextViewRect = new Rect();
+        nextView.getLocalVisibleRect(nextViewRect);
+
+        if(nextViewRect.bottom > mEnclosureBottom){
+            int nextViewVisibilityPixels = nextViewRect.bottom;
+            float nextViewVisibilityPercents = ((float) nextViewVisibilityPixels / (float) nextView.getHeight()) * 100f;
+            if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, nextViewRect " + nextViewRect);
+            if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, nextViewVisibilityPercents " + nextViewVisibilityPercents);
+
+        } else {
+            int nextViewVisibilityPixels = nextViewRect.bottom;
+            if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, nextViewVisibilityPixels " + nextViewVisibilityPixels);
+        }
+    }
+
+    private void calcCurrentViewVisibility(View currentView, Rect currentViewRect) {
+        if(currentViewRect.top < mEnclosureTop){
+            int viewInvisibilityPixels = currentViewRect.top;
+            float viewInvisibilityPercents = (float) viewInvisibilityPixels / (float) currentView.getHeight() * 100f;
+
+            if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, viewInvisibilityPercents " + viewInvisibilityPercents);
+            if(CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS >= viewInvisibilityPercents){
+                mCurrentViewInvisibleReady = true;
+            }
+        }
+    }
+
+    @Override
+    public void setEnclosureTopBottom(int top, int bottom) {
+        if(SHOW_LOGS) Logger.v(TAG, "setEnclosureTopBottom, top " + top + ", bottom " + bottom);
+        mEnclosureTop = top;
+        mEnclosureBottom = bottom;
     }
 
     private String scrollStateStr(int scrollState){
@@ -86,10 +145,10 @@ public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCa
     }
 
     @Override
-    public void setView(View view) {
+    public void setView(View view, View listItemView) {
         if(SHOW_LOGS) Logger.v(TAG, ">> setView");
         synchronized (mCurrentView){
-            mCurrentView.set(view);
+            mCurrentView.set(listItemView);
         }
         if(SHOW_LOGS) Logger.v(TAG, "<< setView");
     }
