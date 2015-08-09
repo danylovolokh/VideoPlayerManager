@@ -17,14 +17,14 @@ import java.util.concurrent.atomic.AtomicReference;
  * If current view is null this class just do nothing.
  * The logic is following : when current view is going out of screen (up or down) by {@link #CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS} or more then it becomes "Ready to become not current".
  * When next to current view becomes visible by {@link #CURRENT_LIST_ITEM_MINIMUM_VISIBILITY_PERCENTS} then it becomes "Ready to become current".
- * When these two rules are met only then current view switches to the view next to it by calling  {@link Callback#onNewVideoVisible(com.volokh.danylo.videolist.adapter.items.ListItem)}
+ * When these two rules are met only then current view switches to the view next to it by calling  {@link Callback#onNewListItemVisible(com.volokh.danylo.videolist.adapter.items.ListItem)}
  *
  * @author danylo.volokh
  */
-public class SingleViewVisibilityCalculator implements ListItemsVisibilityCalculator, ScrollDirectionDetector.OnDetectScrollListener {
+public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCalculator, ScrollDirectionDetector.OnDetectScrollListener {
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
-    private static final String TAG = SingleViewVisibilityCalculator.class.getSimpleName();
+    private static final String TAG = SingleListItemVisibilityCalculator.class.getSimpleName();
 
     private static final int CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS = 80;
     private static final int CURRENT_LIST_ITEM_MINIMUM_VISIBILITY_PERCENTS = 30;
@@ -36,13 +36,13 @@ public class SingleViewVisibilityCalculator implements ListItemsVisibilityCalcul
     private ScrollDirectionDetector.ScrollDirection mScrollDirection;
     private final AtomicReference<View> mCurrentView = new AtomicReference<>();
 
-    public SingleViewVisibilityCalculator(Callback callback, ArrayList<? extends ListItem> listItems) {
+    public SingleListItemVisibilityCalculator(Callback callback, ArrayList<? extends ListItem> listItems) {
         mCallback = callback;
         mListItems = listItems;
     }
 
     public interface Callback<T extends ListItem>{
-        void onNewVideoVisible(T newVideo);
+        void onNewListItemVisible(T newListItem);
     }
 
     @Override
@@ -80,8 +80,8 @@ public class SingleViewVisibilityCalculator implements ListItemsVisibilityCalcul
     }
 
     @Override
-    public void onScrollDirection(ScrollDirectionDetector.ScrollDirection scrollDirection) {
-        if(SHOW_LOGS) Logger.v(TAG, "onScrollDirection, scrollDirection " + scrollDirection);
+    public void onScrollDirectionChanged(ScrollDirectionDetector.ScrollDirection scrollDirection) {
+        if(SHOW_LOGS) Logger.v(TAG, "onScrollDirectionChanged, scrollDirection " + scrollDirection);
         mScrollDirection = scrollDirection;
     }
 

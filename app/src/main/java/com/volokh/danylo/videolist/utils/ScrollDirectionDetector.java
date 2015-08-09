@@ -7,7 +7,7 @@ import com.volokh.danylo.videolist.Config;
 
 /**
  * This class detects a {@link ScrollDirection} ListView is scrolled to.
- * And then call {@link OnDetectScrollListener#onScrollDirection(ScrollDirection)}
+ * And then call {@link OnDetectScrollListener#onScrollDirectionChanged(ScrollDirection)}
  *
  * @author danylo.volokh
  */
@@ -21,13 +21,14 @@ public class ScrollDirectionDetector {
     private int mOldTop;
     private int mOldFirstVisibleItem;
 
+    private ScrollDirection mOldScrollDirection = null;
+
     public ScrollDirectionDetector(OnDetectScrollListener onDetectScrollListener) {
         mOnDetectScrollListener = onDetectScrollListener;
     }
 
     public interface OnDetectScrollListener{
-        // TODO: change this to onScrollDirectionChanged to improve performance
-        void onScrollDirection(ScrollDirection scrollDirection);
+        void onScrollDirectionChanged(ScrollDirection scrollDirection);
     }
 
     public enum ScrollDirection{
@@ -42,20 +43,38 @@ public class ScrollDirectionDetector {
 
         if (firstVisibleItem == mOldFirstVisibleItem) {
             if (top > mOldTop) {
-                mOnDetectScrollListener.onScrollDirection(ScrollDirection.UP);
+                onScrollUp();
             } else if (top < mOldTop) {
-                mOnDetectScrollListener.onScrollDirection(ScrollDirection.DOWN);
+                onScrollDown();
             }
         } else {
             if (firstVisibleItem < mOldFirstVisibleItem) {
-                mOnDetectScrollListener.onScrollDirection(ScrollDirection.UP);
+                onScrollUp();
             } else {
-                mOnDetectScrollListener.onScrollDirection(ScrollDirection.DOWN);
+                onScrollDown();
             }
         }
 
         mOldTop = top;
         mOldFirstVisibleItem = firstVisibleItem;
         if(SHOW_LOGS) Logger.v(TAG, "<< onDetectedListScroll");
+    }
+
+    private void onScrollDown() {
+        if(mOldScrollDirection != ScrollDirection.DOWN){
+            mOldScrollDirection = ScrollDirection.DOWN;
+            mOnDetectScrollListener.onScrollDirectionChanged(ScrollDirection.DOWN);
+        } else {
+            if(SHOW_LOGS) Logger.v(TAG, "onDetectedListScroll, scroll state not changed " + mOldScrollDirection);
+        }
+    }
+
+    private void onScrollUp() {
+        if(mOldScrollDirection != ScrollDirection.UP) {
+            mOldScrollDirection = ScrollDirection.UP;
+            mOnDetectScrollListener.onScrollDirectionChanged(ScrollDirection.UP);
+        } else {
+            if(SHOW_LOGS) Logger.v(TAG, "onDetectedListScroll, scroll state not changed " + mOldScrollDirection);
+        }
     }
 }

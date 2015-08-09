@@ -15,18 +15,18 @@ import com.volokh.danylo.videolist.adapter.items.VideoItem;
 import com.volokh.danylo.videolist.adapter.VideoListAdapter;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
 import com.volokh.danylo.videolist.utils.ListItemsVisibilityCalculator;
-import com.volokh.danylo.videolist.utils.SingleViewVisibilityCalculator;
+import com.volokh.danylo.videolist.utils.SingleListItemVisibilityCalculator;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class VideoListFragment extends Fragment implements AbsListView.OnScrollListener, SingleViewVisibilityCalculator.Callback {
+public class VideoListFragment extends Fragment implements AbsListView.OnScrollListener, SingleListItemVisibilityCalculator.Callback {
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
     private static final String TAG = VideoListFragment.class.getSimpleName();
 
     private final ArrayList<VideoItem> mList = new ArrayList<>();
-    private final ListItemsVisibilityCalculator mVideoVisibilityCalculator = new SingleViewVisibilityCalculator(this, mList);
+    private final ListItemsVisibilityCalculator mVideoVisibilityCalculator = new SingleListItemVisibilityCalculator(this, mList);
     private final VideoPlayerManager mVideoPlayerManager = new SingleVideoPlayerManager(mVideoVisibilityCalculator);
 
     private int mScrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
@@ -92,7 +92,7 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
     }
 
     @Override
-    public void onNewVideoVisible(ListItem newVideo) {
+    public void onNewListItemVisible(ListItem newVideo) {
 
     }
 }
