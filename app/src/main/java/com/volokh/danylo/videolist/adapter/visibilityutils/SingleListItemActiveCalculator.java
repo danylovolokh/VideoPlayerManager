@@ -60,29 +60,47 @@ public class SingleListItemActiveCalculator implements ListItemsVisibilityCalcul
 
         if(scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL){
             CurrentItem currentItem = mCurrentItem.get();
-//            Rect currentViewRect = new Rect();
-//            currentView.getLocalVisibleRect(currentViewRect);
 
             if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, mScrollDirection " + mScrollDirection);
 
             switch (mScrollDirection){
                 case UP:
 
+                    ListItem current = mListItems.get(currentItem.index);
+                    if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, current " + current);
+                    int currentItemVisibilityPercents = current.getVisibilityPercents(currentItem.view);
+                    int previousItemVisibilityPercents = getPreviousItemVisibilityPercents(listView, currentItem);
+
                     break;
                 case DOWN:
-//
-//                    ListItem listItem;
-//                    for (int viewIndex = firstVisibleItem; viewIndex < mListItems.size() + firstVisibleItem; viewIndex++) {
-//                        listItem = mListItems.get(viewIndex);
-//
-//                        if(listItem.isVisibleEnough(listView.getChildAt(viewIndex))){
-//                            break;
-//                        }
-//                    }
+
                     break;
             }
         }
         if(SHOW_LOGS) Logger.v(TAG, "<< calculateItemsVisibility");
+    }
+
+    private int getPreviousItemVisibilityPercents(AbsListView listView, CurrentItem currentItem) {
+        int previousItemVisibilityPercents = 0;
+        int previousItemIndex = currentItem.index -1;
+
+        if(previousItemIndex >= 0){
+            int indexOfCurrentView = listView.indexOfChild(currentItem.view);
+            if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, indexOfCurrentView " + indexOfCurrentView);
+
+            if(indexOfCurrentView > 0){
+                View previousView = listView.getChildAt(indexOfCurrentView - 1);
+                ListItem previous = mListItems.get(previousItemIndex);
+                if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, previous " + previous + ", previousView " + previousView);
+
+                previousItemVisibilityPercents = previous.getVisibilityPercents(previousView);
+            } else {
+                if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, current view is no longer attached to listView");
+            }
+        }
+        if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, result " + previousItemVisibilityPercents);
+
+        return previousItemVisibilityPercents;
     }
 
     private void calcNextViewVisibility(View nextView) {

@@ -481,6 +481,11 @@ public class VideoPlayerView extends ScalableTextureView
         }
     }
 
+    /**
+     * Note : this method might be called after {@link #onDetachedFromWindow()}
+     * @param surface
+     * @return
+     */
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
         if (SHOW_LOGS) Logger.v(TAG, "onSurfaceTextureDestroyed, surface " + surface);
@@ -488,23 +493,31 @@ public class VideoPlayerView extends ScalableTextureView
         if(mLocalSurfaceTextureListener != null){
             mLocalSurfaceTextureListener.onSurfaceTextureDestroyed(surface);
         }
-        mViewHandlerBackgroundThread.post(new Runnable() {
-            @Override
-            public void run() {
 
-                synchronized (mReadyForPlaybackIndicator) {
-                    mReadyForPlaybackIndicator.setSurfaceTextureAvailable(false);
+        if(isAttachedToWindow()){
+            mViewHandlerBackgroundThread.post(new Runnable() {
+                @Override
+                public void run() {
 
-                    /** we have to notify a Thread may be in wait() state in {@link com.volokh.danylo.videolist.ui.VideoPlayerView#start()} method*/
-                    mReadyForPlaybackIndicator.notifyAll();
+                    synchronized (mReadyForPlaybackIndicator) {
+                        mReadyForPlaybackIndicator.setSurfaceTextureAvailable(false);
+
+                        /** we have to notify a Thread may be in wait() state in {@link com.volokh.danylo.videolist.ui.VideoPlayerView#start()} method*/
+                        mReadyForPlaybackIndicator.notifyAll();
+                    }
                 }
-            }
-        });
+            });
+        }
 
         // We have to release this surface manually for better control.
         // Also we do this because we return false from this method
         surface.release();
         return false;
+    }
+
+    @Override
+    public boolean isAttachedToWindow() {
+        return mViewHandlerBackgroundThread != null;
     }
 
     @Override

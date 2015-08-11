@@ -1,5 +1,6 @@
 package com.volokh.danylo.videolist.adapter.items;
 
+import android.graphics.Rect;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,6 +8,7 @@ import android.view.ViewGroup;
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.R;
 import com.volokh.danylo.videolist.adapter.VideoViewHolder;
+import com.volokh.danylo.videolist.utils.Logger;
 
 public abstract class BaseVideoItem implements VideoItem {
 
@@ -28,6 +30,14 @@ public abstract class BaseVideoItem implements VideoItem {
 
     @Override
     public int getVisibilityPercents(View currentView) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> getVisibilityPercents currentView " + currentView);
+
+        Rect currentViewRect = new Rect();
+        currentView.getLocalVisibleRect(currentViewRect);
+        if(SHOW_LOGS) Logger.v(TAG, "getVisibilityPercents currentViewRect " + currentViewRect);
+        int height = currentView.getHeight();
+        if(SHOW_LOGS) Logger.v(TAG, "getVisibilityPercents height " + height);
+
 //        boolean isActiveReady = false;
 //        Rect currentViewRect = new Rect();
 //        currentView.getLocalVisibleRect(currentViewRect);
