@@ -232,7 +232,9 @@ public class MediaPlayerWrapper
             mState.set(State.ERROR);
         }
 
-        stopPositionUpdateNotifier();
+        if(positionUpdaterIsWorking()){
+            stopPositionUpdateNotifier();
+        }
 
         if (mListener != null) {
             mListener.onErrorMainThread(what, extra);
@@ -240,6 +242,10 @@ public class MediaPlayerWrapper
         // We always return true, because after Error player stays in this state.
         // See here http://developer.android.com/reference/android/media/MediaPlayer.html
         return true;
+    }
+
+    private boolean positionUpdaterIsWorking() {
+        return mFuture != null;
     }
 
     @Override
@@ -414,8 +420,22 @@ public class MediaPlayerWrapper
         if (SHOW_LOGS) Logger.v(TAG, ">> reset , mState " + mState);
 
         synchronized (mState) {
-            mMediaPlayer.reset();
-            mState.set(State.IDLE);
+            switch (mState.get()) {
+                case IDLE:
+                case INITIALIZED:
+                case PREPARED:
+                case STARTED:
+                case PAUSED:
+                case STOPPED:
+                case PLAYBACK_COMPLETED:
+                case ERROR:
+                    mMediaPlayer.reset();
+                    mState.set(State.IDLE);
+                    break;
+                case PREPARING:
+                case END:
+                    throw new IllegalStateException("cannot call reset from state " + mState.get());
+            }
         }
         if (SHOW_LOGS) Logger.v(TAG, "<< reset , mState " + mState);
     }

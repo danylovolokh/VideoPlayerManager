@@ -14,19 +14,19 @@ import com.volokh.danylo.videolist.adapter.SingleVideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.items.VideoItem;
 import com.volokh.danylo.videolist.adapter.VideoListAdapter;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
-import com.volokh.danylo.videolist.utils.ListItemsVisibilityCalculator;
-import com.volokh.danylo.videolist.utils.SingleListItemVisibilityCalculator;
+import com.volokh.danylo.videolist.adapter.visibilityutils.ListItemsVisibilityCalculator;
+import com.volokh.danylo.videolist.adapter.visibilityutils.SingleListItemActiveCalculator;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class VideoListFragment extends Fragment implements AbsListView.OnScrollListener, SingleListItemVisibilityCalculator.Callback {
+public class VideoListFragment extends Fragment implements AbsListView.OnScrollListener, SingleListItemActiveCalculator.Callback {
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
     private static final String TAG = VideoListFragment.class.getSimpleName();
 
     private final ArrayList<VideoItem> mList = new ArrayList<>();
-    private final ListItemsVisibilityCalculator mVideoVisibilityCalculator = new SingleListItemVisibilityCalculator(this, mList);
+    private final ListItemsVisibilityCalculator mVideoVisibilityCalculator = new SingleListItemActiveCalculator(this, mList);
     private final VideoPlayerManager mVideoPlayerManager = new SingleVideoPlayerManager(mVideoVisibilityCalculator);
 
     private int mScrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
@@ -36,7 +36,7 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        mVideoVisibilityCalculator.setEnclosureTopBottom(getActivity().getResources().getDisplayMetrics().heightPixels, 0);
+        mVideoVisibilityCalculator.setActionAreaTopBottom(getActivity().getResources().getDisplayMetrics().heightPixels, 0);
 
         try {
             mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4")));
@@ -92,7 +92,7 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
     }
 
     @Override
-    public void onNewListItemVisible(ListItem newVideo) {
+    public void onNewListItemActive(ListItem newVideo) {
 
     }
 }

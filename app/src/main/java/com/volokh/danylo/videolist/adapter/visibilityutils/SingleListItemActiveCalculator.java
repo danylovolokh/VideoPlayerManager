@@ -1,4 +1,4 @@
-package com.volokh.danylo.videolist.utils;
+package com.volokh.danylo.videolist.adapter.visibilityutils;
 
 import android.graphics.Rect;
 import android.view.View;
@@ -6,27 +6,28 @@ import android.widget.AbsListView;
 
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.adapter.items.ListItem;
+import com.volokh.danylo.videolist.utils.Logger;
+import com.volokh.danylo.videolist.utils.ScrollDirectionDetector;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A utility that tracks current {@link com.volokh.danylo.videolist.adapter.items.ListItem} visibility.
- * Current ListItem is an item defined from outside by calling {@link com.volokh.danylo.videolist.adapter.interfaces.SetViewCallback#setView(android.view.View, android.view.View)}.
+ * Current ListItem is an item defined from outside by calling {@link com.volokh.danylo.videolist.adapter.interfaces.SetViewCallback#setCurrentItem(CurrentItemMetaData, android.view.View, android.view.View)}.
  *
  * If current view is null this class just do nothing.
  * The logic is following : when current view is going out of screen (up or down) by {@link #CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS} or more then it becomes "Ready to become not current".
  * When next to current view becomes visible by {@link #CURRENT_LIST_ITEM_MINIMUM_VISIBILITY_PERCENTS} then it becomes "Ready to become current".
- * When these two rules are met only then current view switches to the view next to it by calling  {@link Callback#onNewListItemVisible(com.volokh.danylo.videolist.adapter.items.ListItem)}
+ * When these two rules are met only then current view switches to the view next to it by calling  {@link Callback#onNewListItemActive(com.volokh.danylo.videolist.adapter.items.ListItem)}
  *
  * @author danylo.volokh
  */
-public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCalculator, ScrollDirectionDetector.OnDetectScrollListener {
+public class SingleListItemActiveCalculator implements ListItemsVisibilityCalculator, ScrollDirectionDetector.OnDetectScrollListener {
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
-    private static final String TAG = SingleListItemVisibilityCalculator.class.getSimpleName();
+    private static final String TAG = SingleListItemActiveCalculator.class.getSimpleName();
 
-    private static final int CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS = 80;
     private static final int CURRENT_LIST_ITEM_MINIMUM_VISIBILITY_PERCENTS = 30;
 
     private final Callback mCallback;
@@ -34,20 +35,20 @@ public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCa
     private final ScrollDirectionDetector mScrollDirectionDetector = new ScrollDirectionDetector(this);
 
     private ScrollDirectionDetector.ScrollDirection mScrollDirection;
-    private final AtomicReference<View> mCurrentView = new AtomicReference<>();
+    private final AtomicReference<CurrentItem> mCurrentItem = new AtomicReference<>();
 
-    private int mEnclosureTop;
-    private int mEnclosureBottom;
+    private int mActiveAreaTop;
+    private int mActiveAreaBottom;
 
-    private boolean mCurrentViewInvisibleReady;
+    private boolean mCurrentViewInactiveReady;
 
-    public SingleListItemVisibilityCalculator(Callback callback, ArrayList<? extends ListItem> listItems) {
+    public SingleListItemActiveCalculator(Callback callback, ArrayList<? extends ListItem> listItems) {
         mCallback = callback;
         mListItems = listItems;
     }
 
     public interface Callback<T extends ListItem>{
-        void onNewListItemVisible(T newListItem);
+        void onNewListItemActive(T newListItem);
     }
 
     @Override
@@ -58,30 +59,26 @@ public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCa
         mScrollDirectionDetector.onDetectedListScroll(listView, firstVisibleItem);
 
         if(scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL){
-            View currentView = mCurrentView.get();
-            Rect currentViewRect = new Rect();
-            currentView.getLocalVisibleRect(currentViewRect);
+            CurrentItem currentItem = mCurrentItem.get();
+//            Rect currentViewRect = new Rect();
+//            currentView.getLocalVisibleRect(currentViewRect);
 
             if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, mScrollDirection " + mScrollDirection);
-            if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, mEnclosureTop " + mEnclosureTop + ", mEnclosureBottom " + mEnclosureBottom + ", rect " + currentViewRect);
 
             switch (mScrollDirection){
                 case UP:
 
                     break;
                 case DOWN:
-
-                    calcCurrentViewVisibility(currentView, currentViewRect);
-
-                    int indexOfCurrentView = listView.indexOfChild(currentView);
-                    if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, indexOfCurrentView " + indexOfCurrentView);
-
-                    View nextView = listView.getChildAt(indexOfCurrentView + 1);
-                    if(nextView != null){
-                        calcNextViewVisibility(nextView);
-                    } else {
-                        if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, nextView null");
-                    }
+//
+//                    ListItem listItem;
+//                    for (int viewIndex = firstVisibleItem; viewIndex < mListItems.size() + firstVisibleItem; viewIndex++) {
+//                        listItem = mListItems.get(viewIndex);
+//
+//                        if(listItem.isVisibleEnough(listView.getChildAt(viewIndex))){
+//                            break;
+//                        }
+//                    }
                     break;
             }
         }
@@ -89,12 +86,12 @@ public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCa
     }
 
     private void calcNextViewVisibility(View nextView) {
-        if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, mEnclosureBottom " + mEnclosureBottom);
+        if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, mActiveAreaBottom " + mActiveAreaBottom);
 
         Rect nextViewRect = new Rect();
         nextView.getLocalVisibleRect(nextViewRect);
 
-        if(nextViewRect.bottom > mEnclosureBottom){
+        if(nextViewRect.bottom > mActiveAreaBottom){
             int nextViewVisibilityPixels = nextViewRect.bottom;
             float nextViewVisibilityPercents = ((float) nextViewVisibilityPixels / (float) nextView.getHeight()) * 100f;
             if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, nextViewRect " + nextViewRect);
@@ -106,23 +103,11 @@ public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCa
         }
     }
 
-    private void calcCurrentViewVisibility(View currentView, Rect currentViewRect) {
-        if(currentViewRect.top < mEnclosureTop){
-            int viewInvisibilityPixels = currentViewRect.top;
-            float viewInvisibilityPercents = (float) viewInvisibilityPixels / (float) currentView.getHeight() * 100f;
-
-            if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, viewInvisibilityPercents " + viewInvisibilityPercents);
-            if(CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS >= viewInvisibilityPercents){
-                mCurrentViewInvisibleReady = true;
-            }
-        }
-    }
-
     @Override
-    public void setEnclosureTopBottom(int top, int bottom) {
-        if(SHOW_LOGS) Logger.v(TAG, "setEnclosureTopBottom, top " + top + ", bottom " + bottom);
-        mEnclosureTop = top;
-        mEnclosureBottom = bottom;
+    public void setActionAreaTopBottom(int top, int bottom) {
+        if(SHOW_LOGS) Logger.v(TAG, "setActionAreaTopBottom, top " + top + ", bottom " + bottom);
+        mActiveAreaTop = top;
+        mActiveAreaBottom = bottom;
     }
 
     private String scrollStateStr(int scrollState){
@@ -145,11 +130,11 @@ public class SingleListItemVisibilityCalculator implements ListItemsVisibilityCa
     }
 
     @Override
-    public void setView(View view, View listItemView) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> setView");
-        synchronized (mCurrentView){
-            mCurrentView.set(listItemView);
+    public void setCurrentItem(CurrentItemMetaData currentItemMetaData, /*not used. todo use other interface*/ View view, View listItemView) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> setCurrentItem, currentItemMetaData " + currentItemMetaData);
+        synchronized (mCurrentItem){
+            mCurrentItem.set(new CurrentItem(currentItemMetaData.indexOfCurrentItem, listItemView));
         }
-        if(SHOW_LOGS) Logger.v(TAG, "<< setView");
+        if(SHOW_LOGS) Logger.v(TAG, "<< setCurrentItem");
     }
 }

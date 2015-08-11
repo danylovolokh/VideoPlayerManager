@@ -50,7 +50,7 @@ public class VideoListAdapter extends BaseAdapter {
             resultView = convertView;
         }
 
-        return videoItem.update(resultView, mVideoPlayerManager);
+        return videoItem.update(position, resultView, mVideoPlayerManager);
     }
 
 }

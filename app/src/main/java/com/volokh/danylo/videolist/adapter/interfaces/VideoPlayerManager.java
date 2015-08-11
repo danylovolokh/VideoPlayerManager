@@ -5,9 +5,9 @@ import android.view.View;
 
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
-public interface VideoPlayerManager {
-    void playNewVideo(VideoPlayerView videoPlayerView, String videoUrl, View listItemView);
-    void playNewVideo(VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor, View listItemView);
+public interface VideoPlayerManager<T extends MetaData> {
+    void playNewVideo(T currentItemMetaData, VideoPlayerView videoPlayerView, String videoUrl, View listItemView);
+    void playNewVideo(T metaData, VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor, View listItemView);
     void stopAnyPlayback();
     void resetMediaPlayer();
 }

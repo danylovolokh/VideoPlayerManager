@@ -5,6 +5,7 @@ import android.view.View;
 
 import com.volokh.danylo.videolist.adapter.VideoViewHolder;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
+import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
 
 public class LocalVideoItem extends BaseVideoItem {
 
@@ -15,9 +16,9 @@ public class LocalVideoItem extends BaseVideoItem {
     }
 
     @Override
-    public View update(View view, VideoPlayerManager videoPlayerManager) {
+    public View update(int position, View view, VideoPlayerManager videoPlayerManager) {
         VideoViewHolder viewHolder = (VideoViewHolder) view.getTag();
-        videoPlayerManager.playNewVideo(viewHolder.mPlayer, mAssetFileDescriptor, viewHolder.mListItemView);
+        videoPlayerManager.playNewVideo(new CurrentItemMetaData(position), viewHolder.mPlayer, mAssetFileDescriptor, viewHolder.mListItemView);
         return view;
     }
 }

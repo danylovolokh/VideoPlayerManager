@@ -5,5 +5,5 @@ import android.view.View;
 import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
 
 public interface VideoItem extends ListItem{
-    View update(View view, VideoPlayerManager videoPlayerManager);
+    View update(int position, View view, VideoPlayerManager videoPlayerManager);
 }

@@ -2,6 +2,8 @@ package com.volokh.danylo.videolist.adapter.interfaces;
 
 import android.view.View;
 
+import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
+
 public interface SetViewCallback<T extends View> {
-    void setView(T View, View listItemView); // TODO: remove T view
+    void setCurrentItem(CurrentItemMetaData currentItemMetaData, T view, View listItemView);
 }

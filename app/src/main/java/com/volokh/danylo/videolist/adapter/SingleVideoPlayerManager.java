@@ -20,11 +20,12 @@ import com.volokh.danylo.videolist.player.SetUrlDataSourceMessage;
 import com.volokh.danylo.videolist.player.Start;
 import com.volokh.danylo.videolist.player.Stop;
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
+import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
 import com.volokh.danylo.videolist.utils.Logger;
 
 import java.util.Arrays;
 
-public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayerManagerCallback {
+public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemMetaData>, VideoPlayerManagerCallback {
 
     private static final String TAG = SingleVideoPlayerManager.class.getSimpleName();
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
@@ -40,7 +41,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     @Override
-    public void playNewVideo(VideoPlayerView videoPlayerView, String videoUrl, View listItemView) {
+    public void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView videoPlayerView, String videoUrl, View listItemView) {
         if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayerView + ", mCurrentPlayer " + mCurrentPlayer + ", videoUrl " + videoUrl);
 
 
@@ -50,7 +51,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mPlayerHandler.clearAllPendingMessages(TAG);
 
         stopResetReleaseClearCurrentPlayer();
-        setNewViewForPlayback(videoPlayerView, listItemView);
+        setNewViewForPlayback(currentItemMetaData, videoPlayerView, listItemView);
         startPlayback(videoPlayerView, videoUrl);
 
         mPlayerHandler.resumeQueueProcessing(TAG);
@@ -59,7 +60,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     @Override
-    public void playNewVideo(VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor, View listItemView) {
+    public void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor, View listItemView) {
         if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayerView + ", mCurrentPlayer " + mCurrentPlayer + ", assetFileDescriptor " + assetFileDescriptor);
 
         mPlayerHandler.pauseQueueProcessing(TAG);
@@ -70,7 +71,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         mPlayerHandler.clearAllPendingMessages(TAG);
 
         stopResetReleaseClearCurrentPlayer();
-        setNewViewForPlayback(videoPlayerView, listItemView);
+        setNewViewForPlayback(currentItemMetaData, videoPlayerView, listItemView);
         startPlayback(videoPlayerView, assetFileDescriptor);
 
         mPlayerHandler.resumeQueueProcessing(TAG);
@@ -131,9 +132,9 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
         ));
     }
 
-    private void setNewViewForPlayback(VideoPlayerView videoPlayerView, View listItemView) {
-        if(SHOW_LOGS) Logger.v(TAG, "setNewViewForPlayback, videoPlayer " + videoPlayerView);
-        mPlayerHandler.addMessage(new SetNewViewForPlayback(videoPlayerView, listItemView, this));
+    private void setNewViewForPlayback(CurrentItemMetaData currentItemMetaData, VideoPlayerView videoPlayerView, View listItemView) {
+        if(SHOW_LOGS) Logger.v(TAG, "setNewViewForPlayback, currentItemMetaData " + currentItemMetaData + ", videoPlayer " + videoPlayerView);
+        mPlayerHandler.addMessage(new SetNewViewForPlayback(currentItemMetaData, videoPlayerView, listItemView, this));
     }
 
     private void stopResetReleaseClearCurrentPlayer() {
@@ -227,13 +228,13 @@ public class SingleVideoPlayerManager implements VideoPlayerManager, VideoPlayer
     }
 
     @Override
-    public void setView(VideoPlayerView videoPlayerView, View listItemView) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> setView");
+    public void setCurrentItem(CurrentItemMetaData currentItemMetaData, VideoPlayerView videoPlayerView, View listItemView) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> setCurrentItem");
 
         mCurrentPlayer = videoPlayerView;
-        mSetVideoPlayerCallback.setView(videoPlayerView, listItemView);
+        mSetVideoPlayerCallback.setCurrentItem(currentItemMetaData, mCurrentPlayer, listItemView);
 
-        if(SHOW_LOGS) Logger.v(TAG, "<< setView");
+        if(SHOW_LOGS) Logger.v(TAG, "<< setCurrentItem");
     }
 
     @Override
