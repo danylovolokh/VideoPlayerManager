@@ -2,7 +2,7 @@ package com.volokh.danylo.videolist.player;
 
 import android.view.View;
 
-import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
+import com.volokh.danylo.videolist.player.manager.VideoPlayerManagerCallback;
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
 import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
 

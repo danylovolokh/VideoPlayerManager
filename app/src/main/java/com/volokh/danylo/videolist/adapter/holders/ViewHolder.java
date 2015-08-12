@@ -1,4 +1,4 @@
-package com.volokh.danylo.videolist.adapter.interfaces;
+package com.volokh.danylo.videolist.adapter.holders;
 
 import android.widget.VideoView;
 

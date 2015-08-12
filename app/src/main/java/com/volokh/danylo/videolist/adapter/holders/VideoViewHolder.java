@@ -1,4 +1,4 @@
-package com.volokh.danylo.videolist.adapter;
+package com.volokh.danylo.videolist.adapter.holders;
 
 import android.view.View;
 

@@ -1,8 +1,9 @@
-package com.volokh.danylo.videolist.adapter.interfaces;
+package com.volokh.danylo.videolist.player.manager;
 
 import android.content.res.AssetFileDescriptor;
 import android.view.View;
 
+import com.volokh.danylo.videolist.adapter.visibilityutils.MetaData;
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
 public interface VideoPlayerManager<T extends MetaData> {

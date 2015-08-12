@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.R;
-import com.volokh.danylo.videolist.adapter.VideoViewHolder;
+import com.volokh.danylo.videolist.adapter.holders.VideoViewHolder;
 import com.volokh.danylo.videolist.utils.Logger;
 
 public abstract class BaseVideoItem implements VideoItem {

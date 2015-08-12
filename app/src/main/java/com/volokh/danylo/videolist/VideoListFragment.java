@@ -10,10 +10,10 @@ import android.widget.ListView;
 
 import com.volokh.danylo.videolist.adapter.items.ListItem;
 import com.volokh.danylo.videolist.adapter.items.LocalVideoItem;
-import com.volokh.danylo.videolist.adapter.SingleVideoPlayerManager;
+import com.volokh.danylo.videolist.player.manager.SingleVideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.items.VideoItem;
 import com.volokh.danylo.videolist.adapter.VideoListAdapter;
-import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
+import com.volokh.danylo.videolist.player.manager.VideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.visibilityutils.ListItemsVisibilityCalculator;
 import com.volokh.danylo.videolist.adapter.visibilityutils.SingleListItemActiveCalculator;
 

@@ -1,6 +1,6 @@
 package com.volokh.danylo.videolist.player;
 
-import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
+import com.volokh.danylo.videolist.player.manager.VideoPlayerManagerCallback;
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
 public class CreateNewPlayerInstance extends PlayerMessage {

@@ -2,7 +2,7 @@ package com.volokh.danylo.videolist.player;
 
 import android.content.res.AssetFileDescriptor;
 
-import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
+import com.volokh.danylo.videolist.player.manager.VideoPlayerManagerCallback;
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
 public class SetAssetsDataSourceMessage extends SetDataSourceMessage{

@@ -1,12 +1,10 @@
-package com.volokh.danylo.videolist.adapter;
+package com.volokh.danylo.videolist.player.manager;
 
 import android.content.res.AssetFileDescriptor;
 import android.view.View;
 
 import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.adapter.interfaces.SetViewCallback;
-import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManager;
-import com.volokh.danylo.videolist.adapter.interfaces.VideoPlayerManagerCallback;
 import com.volokh.danylo.videolist.player.ClearPlayerInstance;
 import com.volokh.danylo.videolist.player.CreateNewPlayerInstance;
 import com.volokh.danylo.videolist.player.SetAssetsDataSourceMessage;
