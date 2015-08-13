@@ -1,6 +1,5 @@
 package com.volokh.danylo.videolist.adapter.visibilityutils;
 
-import android.graphics.Rect;
 import android.view.View;
 import android.widget.AbsListView;
 
@@ -19,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * If current view is null this class just do nothing.
  * The logic is following : when current view is going out of screen (up or down) by {@link #CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS} or more then it becomes "Ready to become not current".
  * When next to current view becomes visible by {@link #CURRENT_LIST_ITEM_MINIMUM_VISIBILITY_PERCENTS} then it becomes "Ready to become current".
- * When these two rules are met only then current view switches to the view next to it by calling  {@link Callback#onNewListItemActive(com.volokh.danylo.videolist.adapter.items.ListItem, android.view.View)}
+ * When these two rules are met only then current view switches to the view next to it by calling  {@link Callback#onNewListItemActive}
  *
  * @author danylo.volokh
  */
@@ -37,9 +36,6 @@ public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculato
     /** Initial scroll direction should be UP in order to set as active most top item if no active item yet*/
     private ScrollDirectionDetector.ScrollDirection mScrollDirection = ScrollDirectionDetector.ScrollDirection.UP;
     private final AtomicReference<CurrentItem> mCurrentItem = new AtomicReference<>();
-
-    private int mActiveAreaTop;
-    private int mActiveAreaBottom;
 
     private boolean mCurrentViewInactiveReady;
 
@@ -60,23 +56,66 @@ public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculato
 
         switch (mScrollDirection){
             case UP:
-
-                ListItem current = mListItems.get(currentItem.index);
-                if(SHOW_LOGS) Logger.v(TAG, "onScroll, current " + current);
-                int currentItemVisibilityPercents = current.getVisibilityPercents(currentItem.view);
-                int previousItemVisibilityPercents = getPreviousItemVisibilityPercents(listView, currentItem);
-
+                handleScrollUp(listView, currentItem);
                 break;
             case DOWN:
-
+                handleScrollDown(listView, currentItem);
                 break;
         }
         if(SHOW_LOGS) Logger.v(TAG, "<< onStateTouchScroll, mScrollDirection " + mScrollDirection);
     }
 
+    private void handleScrollUp(AbsListView listView, CurrentItem currentItem) {
+        ListItem current = mListItems.get(currentItem.index);
+        if(SHOW_LOGS) Logger.v(TAG, "handleScrollUp, current " + current);
+        int currentItemVisibilityPercents = current.getVisibilityPercents(currentItem.view);
+        int previousItemVisibilityPercents = getPreviousItemVisibilityPercents(listView, currentItem);
+        if(SHOW_LOGS) Logger.v(TAG, "handleScrollUp, currentItemVisibilityPercents " + currentItemVisibilityPercents);
+        if(SHOW_LOGS) Logger.v(TAG, "handleScrollUp, previousItemVisibilityPercents " + previousItemVisibilityPercents);
+    }
+
+    private void handleScrollDown(AbsListView listView, CurrentItem currentItem) {
+        ListItem current = mListItems.get(currentItem.index);
+        if(SHOW_LOGS) Logger.v(TAG, "handleScrollUp, current " + current);
+        int currentItemVisibilityPercents = current.getVisibilityPercents(currentItem.view);
+        int nextItemVisibilityPercents = getNextItemVisibilityPercents(listView, currentItem);
+        if(SHOW_LOGS) Logger.v(TAG, "handleScrollUp, currentItemVisibilityPercents " + currentItemVisibilityPercents);
+        if(SHOW_LOGS) Logger.v(TAG, "handleScrollUp, nextItemVisibilityPercents " + nextItemVisibilityPercents);
+    }
+
+    private int getNextItemVisibilityPercents(AbsListView listView, CurrentItem currentItem) {
+        int nextItemVisibilityPercents = 0;
+        int nextItemIndex = currentItem.index + 1;
+        if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, nextItemIndex " + nextItemIndex);
+
+        if(nextItemIndex < mListItems.size()){
+            int indexOfCurrentView = listView.indexOfChild(currentItem.view);
+            if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, indexOfCurrentView " + indexOfCurrentView);
+
+            if(indexOfCurrentView >= 0){
+                View nextView = listView.getChildAt(indexOfCurrentView + 1);
+                if(nextView != null){
+                    ListItem next = mListItems.get(nextItemIndex);
+                    if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, next " + next + ", nextView " + nextView);
+
+                    nextItemVisibilityPercents = next.getVisibilityPercents(nextView);
+                } else {
+                    if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, nextView null. There is no view next to current");
+                }
+
+            } else {
+                if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, current view is no longer attached to listView");
+            }
+        }
+        if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, result " + nextItemVisibilityPercents);
+
+        return nextItemVisibilityPercents;
+    }
+
     private int getPreviousItemVisibilityPercents(AbsListView listView, CurrentItem currentItem) {
         int previousItemVisibilityPercents = 0;
         int previousItemIndex = currentItem.index -1;
+        if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, previousItemIndex " + previousItemIndex);
 
         if(previousItemIndex >= 0){
             int indexOfCurrentView = listView.indexOfChild(currentItem.view);
@@ -97,24 +136,6 @@ public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculato
         return previousItemVisibilityPercents;
     }
 
-    private void calcNextViewVisibility(View nextView) {
-        if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, mActiveAreaBottom " + mActiveAreaBottom);
-
-        Rect nextViewRect = new Rect();
-        nextView.getLocalVisibleRect(nextViewRect);
-
-        if(nextViewRect.bottom > mActiveAreaBottom){
-            int nextViewVisibilityPixels = nextViewRect.bottom;
-            float nextViewVisibilityPercents = ((float) nextViewVisibilityPixels / (float) nextView.getHeight()) * 100f;
-            if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, nextViewRect " + nextViewRect);
-            if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, nextViewVisibilityPercents " + nextViewVisibilityPercents);
-
-        } else {
-            int nextViewVisibilityPixels = nextViewRect.bottom;
-            if(SHOW_LOGS) Logger.v(TAG, "calcNextViewVisibility, nextViewVisibilityPixels " + nextViewVisibilityPixels);
-        }
-    }
-
     @Override
     public void onScrollStateIdle(AbsListView listView) {
         CurrentItem currentItem = mCurrentItem.get();
@@ -124,20 +145,19 @@ public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculato
             switch (mScrollDirection){
                 case UP:
 
-                ListItem current = mListItems.get(currentItem.index);
-                if(SHOW_LOGS) Logger.v(TAG, "onScroll, current " + current);
-                int currentItemVisibilityPercents = current.getVisibilityPercents(currentItem.view);
-                int previousItemVisibilityPercents = getPreviousItemVisibilityPercents(listView, currentItem);
+                    handleScrollUp(listView, currentItem);
 
                     break;
                 case DOWN:
 
+                    handleScrollDown(listView, currentItem);
+
                     break;
             }
         } else {
-            ListItem current = mListItems.get(0);
-            View currentView = listView.getChildAt(0);
-            mCallback.onNewListItemActive(current, currentView, 0);
+            // if there is no current item then the most top should become active
+            if(SHOW_LOGS) Logger.v(TAG, "onScrollStateIdle, currentItem null. Do nothing");
+
         }
     }
 
@@ -149,8 +169,6 @@ public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculato
     @Override
     public void setActionAreaTopBottom(int top, int bottom) {
         if(SHOW_LOGS) Logger.v(TAG, "setActionAreaTopBottom, top " + top + ", bottom " + bottom);
-        mActiveAreaTop = top;
-        mActiveAreaBottom = bottom;
     }
 
     @Override

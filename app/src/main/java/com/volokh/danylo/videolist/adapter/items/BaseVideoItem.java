@@ -56,7 +56,7 @@ public abstract class BaseVideoItem implements VideoItem {
     public int getVisibilityPercents(View currentView) {
         if(SHOW_LOGS) Logger.v(TAG, ">> getVisibilityPercents currentView " + currentView);
 
-        int percents = 0;
+        int percents = 100;
 
         currentView.getLocalVisibleRect(mCurrentViewRect);
         if(SHOW_LOGS) Logger.v(TAG, "getVisibilityPercents mCurrentViewRect top " + mCurrentViewRect.top + ", left " + mCurrentViewRect.left + ", bottom " + mCurrentViewRect.bottom + ", right " + mCurrentViewRect.right);
