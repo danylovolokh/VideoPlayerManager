@@ -19,22 +19,23 @@ import java.util.concurrent.atomic.AtomicReference;
  * If current view is null this class just do nothing.
  * The logic is following : when current view is going out of screen (up or down) by {@link #CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS} or more then it becomes "Ready to become not current".
  * When next to current view becomes visible by {@link #CURRENT_LIST_ITEM_MINIMUM_VISIBILITY_PERCENTS} then it becomes "Ready to become current".
- * When these two rules are met only then current view switches to the view next to it by calling  {@link Callback#onNewListItemActive(com.volokh.danylo.videolist.adapter.items.ListItem)}
+ * When these two rules are met only then current view switches to the view next to it by calling  {@link Callback#onNewListItemActive(com.volokh.danylo.videolist.adapter.items.ListItem, android.view.View)}
  *
  * @author danylo.volokh
  */
-public class SingleListItemActiveCalculator implements ListItemsVisibilityCalculator, ScrollDirectionDetector.OnDetectScrollListener {
+public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculator {
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
     private static final String TAG = SingleListItemActiveCalculator.class.getSimpleName();
 
     private static final int CURRENT_LIST_ITEM_MINIMUM_VISIBILITY_PERCENTS = 30;
+    private static final int CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS = 80;
 
-    private final Callback mCallback;
+    private final Callback<ListItem> mCallback;
     private final ArrayList<? extends ListItem> mListItems;
-    private final ScrollDirectionDetector mScrollDirectionDetector = new ScrollDirectionDetector(this);
 
-    private ScrollDirectionDetector.ScrollDirection mScrollDirection;
+    /** Initial scroll direction should be UP in order to set as active most top item if no active item yet*/
+    private ScrollDirectionDetector.ScrollDirection mScrollDirection = ScrollDirectionDetector.ScrollDirection.UP;
     private final AtomicReference<CurrentItem> mCurrentItem = new AtomicReference<>();
 
     private int mActiveAreaTop;
@@ -48,36 +49,29 @@ public class SingleListItemActiveCalculator implements ListItemsVisibilityCalcul
     }
 
     public interface Callback<T extends ListItem>{
-        void onNewListItemActive(T newListItem);
+        void onNewListItemActive(T newListItem, View currentView, int position);
     }
 
     @Override
-    public void calculateItemsVisibility(AbsListView listView, int firstVisibleItem, int visibleItemCount, int scrollState/*TODO: add current item here. start tracking from it*/) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> calculateItemsVisibility");
+    protected void onStateTouchScroll(AbsListView listView) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> onStateTouchScroll, mScrollDirection " + mScrollDirection);
 
-        if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, firstVisibleItem " + firstVisibleItem + ", visibleItemCount " + visibleItemCount + ", scrollState " + scrollStateStr(scrollState));
-        mScrollDirectionDetector.onDetectedListScroll(listView, firstVisibleItem);
+        CurrentItem currentItem = mCurrentItem.get();
 
-        if(scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL){
-            CurrentItem currentItem = mCurrentItem.get();
+        switch (mScrollDirection){
+            case UP:
 
-            if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, mScrollDirection " + mScrollDirection);
+                ListItem current = mListItems.get(currentItem.index);
+                if(SHOW_LOGS) Logger.v(TAG, "onScroll, current " + current);
+                int currentItemVisibilityPercents = current.getVisibilityPercents(currentItem.view);
+                int previousItemVisibilityPercents = getPreviousItemVisibilityPercents(listView, currentItem);
 
-            switch (mScrollDirection){
-                case UP:
+                break;
+            case DOWN:
 
-                    ListItem current = mListItems.get(currentItem.index);
-                    if(SHOW_LOGS) Logger.v(TAG, "calculateItemsVisibility, current " + current);
-                    int currentItemVisibilityPercents = current.getVisibilityPercents(currentItem.view);
-                    int previousItemVisibilityPercents = getPreviousItemVisibilityPercents(listView, currentItem);
-
-                    break;
-                case DOWN:
-
-                    break;
-            }
+                break;
         }
-        if(SHOW_LOGS) Logger.v(TAG, "<< calculateItemsVisibility");
+        if(SHOW_LOGS) Logger.v(TAG, "<< onStateTouchScroll, mScrollDirection " + mScrollDirection);
     }
 
     private int getPreviousItemVisibilityPercents(AbsListView listView, CurrentItem currentItem) {
@@ -122,23 +116,41 @@ public class SingleListItemActiveCalculator implements ListItemsVisibilityCalcul
     }
 
     @Override
+    public void onScrollStateIdle(AbsListView listView) {
+        CurrentItem currentItem = mCurrentItem.get();
+        if(SHOW_LOGS) Logger.v(TAG, "onScrollStateIdle, currentItem " + currentItem);
+
+        if(currentItem != null){
+            switch (mScrollDirection){
+                case UP:
+
+                ListItem current = mListItems.get(currentItem.index);
+                if(SHOW_LOGS) Logger.v(TAG, "onScroll, current " + current);
+                int currentItemVisibilityPercents = current.getVisibilityPercents(currentItem.view);
+                int previousItemVisibilityPercents = getPreviousItemVisibilityPercents(listView, currentItem);
+
+                    break;
+                case DOWN:
+
+                    break;
+            }
+        } else {
+            ListItem current = mListItems.get(0);
+            View currentView = listView.getChildAt(0);
+            mCallback.onNewListItemActive(current, currentView, 0);
+        }
+    }
+
+    @Override
+    protected void onStateFling(AbsListView listView) {
+
+    }
+
+    @Override
     public void setActionAreaTopBottom(int top, int bottom) {
         if(SHOW_LOGS) Logger.v(TAG, "setActionAreaTopBottom, top " + top + ", bottom " + bottom);
         mActiveAreaTop = top;
         mActiveAreaBottom = bottom;
-    }
-
-    private String scrollStateStr(int scrollState){
-        switch (scrollState){
-            case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
-                return "SCROLL_STATE_FLING";
-            case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
-                return "SCROLL_STATE_IDLE";
-            case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
-                return "SCROLL_STATE_TOUCH_SCROLL";
-            default:
-                throw new RuntimeException("wrong data, scrollState " + scrollState);
-        }
     }
 
     @Override

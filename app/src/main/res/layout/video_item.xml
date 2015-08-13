@@ -1,26 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="0dp"
-    android:background="@color/video_thumbnail_placeholder_color">
+    android:layout_marginLeft="5dp"
+    android:layout_marginRight="5dp"
+    android:layout_marginTop="2.5dp"
+    android:layout_marginBottom="2.5dp"
+    card_view:cardCornerRadius="4dp">
 
-    <com.volokh.danylo.videolist.ui.VideoPlayerView
-        android:id="@+id/player"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:background="@color/video_thumbnail_placeholder_color"
+        android:orientation="vertical">
 
-    <TextView
-        android:text="visibility = 67%"
-        android:id="@+id/percentage_bottom"
-        style="@style/BaseText"
-        android:layout_alignParentBottom="true"/>
+        <com.volokh.danylo.videolist.ui.VideoPlayerView
+            android:id="@+id/player"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
-    <TextView
-        android:text="Title"
-        android:id="@+id/title"
-        style="@style/BaseText"
-        android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@+id/percentage_bottom"/>
 
-</RelativeLayout>
+        <TextView
+            android:id="@+id/percentage_bottom"
+            style="@style/BaseText"
+            android:layout_alignParentBottom="true"
+            android:text="visibility = 67%" />
+
+        <TextView
+            android:id="@+id/title"
+            style="@style/BaseText"
+            android:layout_alignParentBottom="true"
+            android:layout_toRightOf="@+id/percentage_bottom"
+            android:text="Title" />
+
+    </RelativeLayout>
+</android.support.v7.widget.CardView>

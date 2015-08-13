@@ -5,12 +5,14 @@ import android.view.View;
 import com.volokh.danylo.videolist.adapter.holders.VideoViewHolder;
 import com.volokh.danylo.videolist.player.manager.VideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
+import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
 public class DirectLinkVideoItem extends BaseVideoItem {
 
     private final String mDirectUrl;
 
-    public DirectLinkVideoItem(String directUr) {
+    public DirectLinkVideoItem(String directUr, VideoPlayerManager videoPlayerManager) {
+        super(videoPlayerManager);
         mDirectUrl = directUr;
     }
 
@@ -19,5 +21,10 @@ public class DirectLinkVideoItem extends BaseVideoItem {
         VideoViewHolder viewHolder = (VideoViewHolder) view.getTag();
         videoPlayerManager.playNewVideo(new CurrentItemMetaData(position), viewHolder.mPlayer, mDirectUrl, viewHolder.mListItemView);
         return view;
+    }
+
+    @Override
+    protected void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager videoPlayerManager, View view) {
+
     }
 }

@@ -9,6 +9,6 @@ import android.view.ViewGroup;
  * @author danylo.volokh
  */
 public interface ListItem {
-    View createView(ViewGroup parent, int screenWidth);
     int getVisibilityPercents(View currentView);
+    void setActive(View currentView, int position);
 }

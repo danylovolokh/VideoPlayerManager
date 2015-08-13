@@ -8,7 +8,7 @@ import com.volokh.danylo.videolist.ui.VideoPlayerView;
 
 public class VideoViewHolder{
     public final VideoPlayerView mPlayer;
-    public final View mListItemView;
+    public final View mListItemView; // TODO: remove
 
     public VideoViewHolder(View view) {
         mListItemView = view;
