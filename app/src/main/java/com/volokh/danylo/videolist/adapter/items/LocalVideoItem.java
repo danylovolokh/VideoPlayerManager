@@ -28,4 +28,9 @@ public class LocalVideoItem extends BaseVideoItem{
     protected void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<CurrentItemMetaData> videoPlayerManager, View view) {
         videoPlayerManager.playNewVideo(currentItemMetaData, player, mAssetFileDescriptor, view);
     }
+
+    @Override
+    protected void stopPlayback(VideoPlayerManager videoPlayerManager) {
+        videoPlayerManager.stopAnyPlayback();
+    }
 }

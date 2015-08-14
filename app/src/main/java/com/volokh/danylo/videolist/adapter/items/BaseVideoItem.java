@@ -28,11 +28,17 @@ public abstract class BaseVideoItem implements VideoItem {
     }
 
     protected abstract void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<CurrentItemMetaData> videoPlayerManager, View view);
+    protected abstract void stopPlayback(VideoPlayerManager videoPlayerManager);
 
     @Override
     public void setActive(View view, int position) {
         VideoViewHolder viewHolder = (VideoViewHolder) view.getTag();
         playNewVideo(new CurrentItemMetaData(position), viewHolder.mPlayer, mVideoPlayerManager, view);
+    }
+
+    @Override
+    public void deactivate(View currentView, int position) {
+        stopPlayback(mVideoPlayerManager);
     }
 
     @Override

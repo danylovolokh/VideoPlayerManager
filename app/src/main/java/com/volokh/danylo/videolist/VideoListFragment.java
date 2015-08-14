@@ -16,6 +16,7 @@ import com.volokh.danylo.videolist.adapter.VideoListAdapter;
 import com.volokh.danylo.videolist.player.manager.VideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.visibilityutils.ListItemsVisibilityCalculator;
 import com.volokh.danylo.videolist.adapter.visibilityutils.SingleListItemActiveCalculator;
+import com.volokh.danylo.videolist.utils.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -118,7 +119,14 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
     }
 
     @Override
-    public void onNewListItemActive(ListItem newListItem, View currentView, int position) {
+    public void onActivateNewCurrentItem(ListItem newListItem, View currentView, int position) {
+        if(SHOW_LOGS) Logger.v(TAG, "onActivateNewCurrentItem, newListItem " + newListItem);
         newListItem.setActive(currentView, position);
+    }
+
+    @Override
+    public void onDeactivateCurrentItem(ListItem itemToDeactivate, View view, int position) {
+        if(SHOW_LOGS) Logger.v(TAG, "onDeactivateCurrentItem, itemToDeactivate " + itemToDeactivate);
+        itemToDeactivate.deactivate(view, position);
     }
 }

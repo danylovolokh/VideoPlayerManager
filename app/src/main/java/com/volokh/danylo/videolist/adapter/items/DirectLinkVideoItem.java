@@ -27,4 +27,9 @@ public class DirectLinkVideoItem extends BaseVideoItem {
     protected void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager videoPlayerManager, View view) {
 
     }
+
+    @Override
+    protected void stopPlayback(VideoPlayerManager videoPlayerManager) {
+
+    }
 }
