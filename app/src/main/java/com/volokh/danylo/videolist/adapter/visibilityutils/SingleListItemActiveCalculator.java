@@ -12,13 +12,20 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
+ *
  * A utility that tracks current {@link com.volokh.danylo.videolist.adapter.items.ListItem} visibility.
  * Current ListItem is an item defined from outside by calling {@link com.volokh.danylo.videolist.adapter.interfaces.SetViewCallback#setCurrentItem(CurrentItemMetaData, android.view.View, android.view.View)}.
+ * Or it might be mock current item created in method {@link #getMockCurrentItem}
  *
- * If current view is null this class just do nothing.
- * The logic is following : when current view is going out of screen (up or down) by {@link #CURRENT_LIST_ITEM_MINIMUM_INVISIBILITY_PERCENTS} or more then it becomes "Ready to become not current".
- * When next to current view becomes visible by {@link #INACTIVE_LIST_ITEM_VISIBILITY_PERCENTS} then it becomes "Ready to become current".
- * When these two rules are met only then current view switches to the view next to it by calling  {@link Callback#onActivateNewCurrentItem}
+ * The logic is following: when current view is going out of screen (up or down) by {@link #INACTIVE_LIST_ITEM_VISIBILITY_PERCENTS} or more then neighbour item become "active" by calling {@link Callback#onActivateNewCurrentItem}
+ * "Going out of screen" is calculated when {@link #onStateTouchScroll} is called from super class {@link BaseItemsVisibilityCalculator}
+ *
+ * Method {@link #onScrollStateIdle} should be called only when scroll state become idle. // TODO: test it
+ * When it's called we look for new current item that eventually will be set as "active" by calling {@link com.volokh.danylo.videolist.adapter.interfaces.SetViewCallback#setCurrentItem}
+ * Regarding the {@link #mScrollDirection} new current item is calculated from top to bottom (if DOWN) or from bottom to top (if UP).
+ * The first(or last) visible item is set to current. It's visibility percentage is calculated. Then we are going though all visible items and find the one that is the most visible.
+ *
+ * Method {@link #onStateFling} is calling {@link Callback#onDeactivateCurrentItem}
  *
  * @author danylo.volokh
  */
@@ -27,8 +34,7 @@ public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculato
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
     private static final String TAG = SingleListItemActiveCalculator.class.getSimpleName();
 
-    private static final int INACTIVE_LIST_ITEM_VISIBILITY_PERCENTS = 80;
-    private static final int ACTIVE_LIST_ITEM_VISIBILITY_PERCENTS = 80;
+    private static final int INACTIVE_LIST_ITEM_VISIBILITY_PERCENTS = 70;
 
     private final Callback<ListItem> mCallback;
     private final ArrayList<? extends ListItem> mListItems;
@@ -37,9 +43,7 @@ public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculato
     private ScrollDirectionDetector.ScrollDirection mScrollDirection = ScrollDirectionDetector.ScrollDirection.UP;
     private final AtomicReference<ListItemData> mCurrentItem = new AtomicReference<>();
 
-    private boolean mCurrentViewInactiveReady;
-
-    public SingleListItemActiveCalculator(Callback callback, ArrayList<? extends ListItem> listItems) {
+    public SingleListItemActiveCalculator(Callback<ListItem> callback, ArrayList<? extends ListItem> listItems) {
         mCallback = callback;
         mListItems = listItems;
     }
@@ -59,105 +63,168 @@ public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculato
         if(SHOW_LOGS) Logger.v(TAG, "<< onStateTouchScroll, mScrollDirection " + mScrollDirection);
     }
 
-    private int getCurrentItemVisibilityPercents(ListItemData listItemData) {
-        ListItem current = mListItems.get(listItemData.getIndex());
-        if(SHOW_LOGS) Logger.v(TAG, "getCurrentItemVisibilityPercents, current " + current);
-        return current.getVisibilityPercents(listItemData.getView());
-    }
-
-    private int getNextItemVisibilityPercents(AbsListView listView, ListItemData listItemData, ListItemData neighbourItemData) {
+    private void findNextItem(AbsListView listView, ListItemData listItemData, ListItemData outNextItemData) {
         int nextItemVisibilityPercents = 0;
         int nextItemIndex = listItemData.getIndex() + 1;
-        View nextView = null;
-        if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, nextItemIndex " + nextItemIndex);
+        if(SHOW_LOGS) Logger.v(TAG, "findNextItem, nextItemIndex " + nextItemIndex);
 
         if(nextItemIndex < mListItems.size()){
             int indexOfCurrentView = listView.indexOfChild(listItemData.getView());
-            if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, indexOfCurrentView " + indexOfCurrentView);
+            if(SHOW_LOGS) Logger.v(TAG, "findNextItem, indexOfCurrentView " + indexOfCurrentView);
 
             if(indexOfCurrentView >= 0){
-                nextView = listView.getChildAt(indexOfCurrentView + 1);
+                View nextView = listView.getChildAt(indexOfCurrentView + 1);
                 if(nextView != null){
                     ListItem next = mListItems.get(nextItemIndex);
-                    if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, next " + next + ", nextView " + nextView);
+                    if(SHOW_LOGS) Logger.v(TAG, "findNextItem, next " + next + ", nextView " + nextView);
 
                     nextItemVisibilityPercents = next.getVisibilityPercents(nextView);
+                    outNextItemData.fillWithData(nextItemIndex, nextView);
+
                 } else {
-                    if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, nextView null. There is no view next to current");
+                    if(SHOW_LOGS) Logger.v(TAG, "findNextItem, nextView null. There is no view next to current");
                 }
 
             } else {
-                if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, current view is no longer attached to listView");
+                if(SHOW_LOGS) Logger.v(TAG, "findNextItem, current view is no longer attached to listView");
             }
         }
-        if(SHOW_LOGS) Logger.v(TAG, "getNextItemVisibilityPercents, result " + nextItemVisibilityPercents);
-        neighbourItemData.fillWithData(nextItemIndex, nextView);
-        return nextItemVisibilityPercents;
+        if(SHOW_LOGS) Logger.v(TAG, "findNextItem, nextItemVisibilityPercents " + nextItemVisibilityPercents);
     }
 
-    private int getPreviousItemVisibilityPercents(AbsListView listView, ListItemData listItemData, ListItemData neighbourItemData) {
+    private void findPreviousItem(AbsListView listView, ListItemData listItemData, ListItemData outPreviousItemData) {
         int previousItemVisibilityPercents = 0;
         int previousItemIndex = listItemData.getIndex() -1;
-        View previousView = null;
-        if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, previousItemIndex " + previousItemIndex);
+        if(SHOW_LOGS) Logger.v(TAG, "findPreviousItem, previousItemIndex " + previousItemIndex);
 
         if(previousItemIndex >= 0){
             int indexOfCurrentView = listView.indexOfChild(listItemData.getView());
-            if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, indexOfCurrentView " + indexOfCurrentView);
+            if(SHOW_LOGS) Logger.v(TAG, "findPreviousItem, indexOfCurrentView " + indexOfCurrentView);
 
             if(indexOfCurrentView > 0){
-                previousView = listView.getChildAt(indexOfCurrentView - 1);
+                View previousView = listView.getChildAt(indexOfCurrentView - 1);
                 ListItem previous = mListItems.get(previousItemIndex);
-                if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, previous " + previous + ", previousView " + previousView);
+                if(SHOW_LOGS) Logger.v(TAG, "findPreviousItem, previous " + previous + ", previousView " + previousView);
 
                 previousItemVisibilityPercents = previous.getVisibilityPercents(previousView);
+                outPreviousItemData.fillWithData(previousItemIndex, previousView);
+
             } else {
-                if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, current view is no longer attached to listView");
+                if(SHOW_LOGS) Logger.v(TAG, "findPreviousItem, current view is no longer attached to listView");
             }
         }
-        if(SHOW_LOGS) Logger.v(TAG, "getPreviousItemVisibilityPercents, result " + previousItemVisibilityPercents);
-        neighbourItemData.fillWithData(previousItemIndex, previousView);
-        return previousItemVisibilityPercents;
+        if(SHOW_LOGS) Logger.v(TAG, "findPreviousItem, previousItemVisibilityPercents " + previousItemVisibilityPercents);
     }
 
     @Override
-    public void onScrollStateIdle(AbsListView listView) {
-        ListItemData listItemData = mCurrentItem.get();
-        if(SHOW_LOGS) Logger.v(TAG, "onScrollStateIdle, listItemData " + listItemData);
+    public void onScrollStateIdle(AbsListView listView, int firstVisiblePosition, int lastVisiblePosition) {
 
-        if(listItemData != null){
-            calculateActiveItem(listView, listItemData); // todo fix. not working
-        } else {
-            // if there is no current item then the most top should become active
-            if(SHOW_LOGS) Logger.v(TAG, "onScrollStateIdle, listItemData null. Do nothing");
+        if(SHOW_LOGS) Logger.v(TAG, "onScrollStateIdle, firstVisiblePosition " + firstVisiblePosition + ", lastVisiblePosition " + lastVisiblePosition);
+        calculateMostVisibleItem(listView, firstVisiblePosition, lastVisiblePosition);
+    }
 
+    private void calculateMostVisibleItem(AbsListView listView, int firstVisiblePosition, int lastVisiblePosition) {
+
+        ListItemData mostVisibleItem = getMockCurrentItem(listView, firstVisiblePosition, lastVisiblePosition);
+        int maxVisibilityPercents = mostVisibleItem.getVisibilityPercents(mListItems);
+
+        switch (mScrollDirection){
+            case UP:
+                bottomToTopMostVisibleItem(listView, maxVisibilityPercents, mostVisibleItem);
+                break;
+            case DOWN:
+                topToBottomMostVisibleItem(listView, maxVisibilityPercents, mostVisibleItem);
+                break;
+            default:
+                throw new RuntimeException("not handled mScrollDirection " + mScrollDirection);
         }
+        mCallback.onActivateNewCurrentItem(mListItems.get(mostVisibleItem.getIndex()),mostVisibleItem.getView(), mostVisibleItem.getIndex());
+    }
+
+    private void topToBottomMostVisibleItem(AbsListView listView, int maxVisibilityPercents, ListItemData outMostVisibleItem) {
+        int mostVisibleItemVisibilityPercents = maxVisibilityPercents;
+
+        int currentItemVisibilityPercents;
+
+        for(int indexOfCurrentItem = listView.getFirstVisiblePosition(), indexOfCurrentView = listView.indexOfChild(outMostVisibleItem.getView())
+                ; indexOfCurrentView < listView.getChildCount() // iterating via listView Items
+                ; indexOfCurrentItem++, indexOfCurrentView++){
+
+            if(SHOW_LOGS) Logger.v(TAG, "topToBottomMostVisibleItem, indexOfCurrentView " + indexOfCurrentView);
+            ListItem listItem = mListItems.get(indexOfCurrentItem);
+            View currentView = listView.getChildAt(indexOfCurrentView);
+            currentItemVisibilityPercents = listItem.getVisibilityPercents(currentView);
+            if(SHOW_LOGS) Logger.v(TAG, "topToBottomMostVisibleItem, currentItemVisibilityPercents " + currentItemVisibilityPercents);
+
+            if(currentItemVisibilityPercents >= mostVisibleItemVisibilityPercents){
+                mostVisibleItemVisibilityPercents = currentItemVisibilityPercents;
+                outMostVisibleItem.fillWithData(indexOfCurrentItem, currentView);
+            }
+        }
+        if(SHOW_LOGS) Logger.v(TAG, "topToBottomMostVisibleItem, outMostVisibleItem " + outMostVisibleItem);
+    }
+
+    private void bottomToTopMostVisibleItem(AbsListView listView, int maxVisibilityPercents, ListItemData outMostVisibleItem) {
+        int mostVisibleItemVisibilityPercents = maxVisibilityPercents;
+
+        int currentItemVisibilityPercents;
+        for(int indexOfCurrentItem = listView.getLastVisiblePosition(), indexOfCurrentView = listView.indexOfChild(outMostVisibleItem.getView())
+                ; indexOfCurrentView >= 0 // iterating via listView Items
+                ; indexOfCurrentItem--, indexOfCurrentView--){
+
+            if(SHOW_LOGS) Logger.v(TAG, "bottomToTopMostVisibleItem, indexOfCurrentView " + indexOfCurrentView);
+            ListItem listItem = mListItems.get(indexOfCurrentItem);
+            View currentView = listView.getChildAt(indexOfCurrentView);
+            currentItemVisibilityPercents = listItem.getVisibilityPercents(currentView);
+            if(SHOW_LOGS) Logger.v(TAG, "bottomToTopMostVisibleItem, currentItemVisibilityPercents " + currentItemVisibilityPercents);
+
+            if(currentItemVisibilityPercents >= mostVisibleItemVisibilityPercents){
+                mostVisibleItemVisibilityPercents = currentItemVisibilityPercents;
+                outMostVisibleItem.fillWithData(indexOfCurrentItem, currentView);
+            }
+        }
+        if(SHOW_LOGS) Logger.v(TAG, "bottomToTopMostVisibleItem, outMostVisibleItem " + outMostVisibleItem);
+    }
+
+    /**
+     * @param listView - {@link android.widget.AbsListView instance}
+     * @param firstVisiblePosition in {@link #mListItems}
+     * @param lastVisiblePosition in {@link #mListItems}
+     * @return ListItemData at lastVisiblePosition if user scrolled UP and ListItemData at firstVisiblePosition if user scrolled DOWN
+     */
+    private ListItemData getMockCurrentItem(AbsListView listView, int firstVisiblePosition, int lastVisiblePosition) {
+        if(SHOW_LOGS) Logger.v(TAG, "getMockCurrentItem, mScrollDirection " + mScrollDirection);
+
+        ListItemData mockCurrentItemData;
+        switch (mScrollDirection){
+            case UP:
+                mockCurrentItemData = new ListItemData().fillWithData(lastVisiblePosition, listView.getChildAt(listView.getChildCount() - 1));
+                break;
+            case DOWN:
+                mockCurrentItemData = new ListItemData().fillWithData(firstVisiblePosition, listView.getChildAt(0/*first visible*/));
+                break;
+            default:
+                throw new RuntimeException("not handled mScrollDirection " + mScrollDirection);
+        }
+        return mockCurrentItemData;
     }
 
     private void calculateActiveItem(AbsListView listView, ListItemData listItemData) {
-        int currentItemVisibilityPercents = getCurrentItemVisibilityPercents(listItemData);
+        int currentItemVisibilityPercents = listItemData.getVisibilityPercents(mListItems);
         if(SHOW_LOGS) Logger.v(TAG, "calculateActiveItem, mScrollDirection " + mScrollDirection);
-
-        int neighbourItemVisibilityPercents = 0;
 
         ListItemData neighbourItemData = new ListItemData();
         switch (mScrollDirection){
             case UP:
-                neighbourItemVisibilityPercents = getPreviousItemVisibilityPercents(listView, listItemData, neighbourItemData);
+                findPreviousItem(listView, listItemData, neighbourItemData);
                 break;
             case DOWN:
-                neighbourItemVisibilityPercents = getNextItemVisibilityPercents(listView, listItemData, neighbourItemData);
+                findNextItem(listView, listItemData, neighbourItemData);
                 break;
         }
         if(SHOW_LOGS) Logger.v(TAG, "calculateActiveItem, currentItemVisibilityPercents " + currentItemVisibilityPercents);
-        if(SHOW_LOGS) Logger.v(TAG, "calculateActiveItem, neighbourItemVisibilityPercents " + neighbourItemVisibilityPercents);
 
-
-        if(itemIsInvisible(currentItemVisibilityPercents)){
-            mCallback.onDeactivateCurrentItem(mListItems.get(listItemData.getIndex()), listItemData.getView(), listItemData.getIndex());
-        }
-        if(enoughPercentsForDeactivation(currentItemVisibilityPercents) &&
-           enoughPercentsForActivation(neighbourItemVisibilityPercents)){
+        if(enoughPercentsForDeactivation(currentItemVisibilityPercents) && neighbourItemData.isAvailable()){
 
             mCallback.onActivateNewCurrentItem(
                     mListItems.get(neighbourItemData.getIndex())
@@ -166,32 +233,16 @@ public class SingleListItemActiveCalculator extends BaseItemsVisibilityCalculato
         }
     }
 
-    private boolean enoughPercentsForActivation(int visibilityPercents) {
-        boolean enoughPercentsForActivation = visibilityPercents >= ACTIVE_LIST_ITEM_VISIBILITY_PERCENTS;
-        if(SHOW_LOGS) Logger.v(TAG, "enoughPercentsForActivation " + enoughPercentsForActivation);
-        return enoughPercentsForActivation;
-    }
-
     private boolean enoughPercentsForDeactivation(int visibilityPercents) {
         boolean enoughPercentsForDeactivation = visibilityPercents <= INACTIVE_LIST_ITEM_VISIBILITY_PERCENTS;
         if(SHOW_LOGS) Logger.v(TAG, "enoughPercentsForDeactivation " + enoughPercentsForDeactivation);
         return enoughPercentsForDeactivation;
     }
 
-    private boolean itemIsInvisible(int currentItemVisibilityPercents) {
-        boolean itemIsInvisible = currentItemVisibilityPercents == 0;
-        if(SHOW_LOGS) Logger.v(TAG, "itemIsInvisible " + itemIsInvisible);
-        return itemIsInvisible;
-    }
-
     @Override
     protected void onStateFling(AbsListView listView) {
-
-    }
-
-    @Override
-    public void setActionAreaTopBottom(int top, int bottom) {
-        if(SHOW_LOGS) Logger.v(TAG, "setActionAreaTopBottom, top " + top + ", bottom " + bottom);
+        ListItemData currentItemData = mCurrentItem.get();
+        mCallback.onDeactivateCurrentItem(mListItems.get(currentItemData.getIndex()), currentItemData.getView(), currentItemData.getIndex());
     }
 
     @Override

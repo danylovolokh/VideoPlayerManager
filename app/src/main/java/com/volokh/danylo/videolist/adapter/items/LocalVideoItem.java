@@ -3,6 +3,7 @@ package com.volokh.danylo.videolist.adapter.items;
 import android.content.res.AssetFileDescriptor;
 import android.view.View;
 
+import com.volokh.danylo.videolist.adapter.holders.VideoViewHolder;
 import com.volokh.danylo.videolist.player.manager.VideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
@@ -10,15 +11,18 @@ import com.volokh.danylo.videolist.ui.VideoPlayerView;
 public class LocalVideoItem extends BaseVideoItem{
 
     private final AssetFileDescriptor mAssetFileDescriptor;
+    private final String mTitle;
 
-    public LocalVideoItem(AssetFileDescriptor assetFileDescriptor, VideoPlayerManager videoPlayerManager) {
+    public LocalVideoItem(String title, AssetFileDescriptor assetFileDescriptor, VideoPlayerManager videoPlayerManager) {
         super(videoPlayerManager);
         mAssetFileDescriptor = assetFileDescriptor;
+        mTitle = title;
     }
 
     @Override
     public View update(int position, View view, VideoPlayerManager videoPlayerManager) {
-//        VideoViewHolder viewHolder = (VideoViewHolder) view.getTag();
+        VideoViewHolder viewHolder = (VideoViewHolder) view.getTag();
+        viewHolder.mTitle.setText(mTitle);
 //        videoPlayerManager.playNewVideo(new CurrentItemMetaData(position), viewHolder.mPlayer, mAssetFileDescriptor, viewHolder.mListItemView);
         return view;
     }

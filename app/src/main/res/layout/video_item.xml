@@ -21,19 +21,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-
-        <TextView
-            android:id="@+id/percentage_bottom"
-            style="@style/BaseText"
-            android:layout_alignParentBottom="true"
-            android:text="visibility = 67%" />
-
         <TextView
             android:id="@+id/title"
             style="@style/BaseText"
-            android:layout_alignParentBottom="true"
-            android:layout_toRightOf="@+id/percentage_bottom"
-            android:text="Title" />
+            android:layout_alignParentBottom="true"/>
 
     </RelativeLayout>
 </android.support.v7.widget.CardView>

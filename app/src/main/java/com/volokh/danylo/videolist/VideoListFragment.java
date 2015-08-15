@@ -21,7 +21,7 @@ import com.volokh.danylo.videolist.utils.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class VideoListFragment extends Fragment implements AbsListView.OnScrollListener, SingleListItemActiveCalculator.Callback {
+public class VideoListFragment extends Fragment implements AbsListView.OnScrollListener, SingleListItemActiveCalculator.Callback<ListItem> {
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
     private static final String TAG = VideoListFragment.class.getSimpleName();
@@ -38,31 +38,26 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        mVideoVisibilityCalculator.setActionAreaTopBottom(getActivity().getResources().getDisplayMetrics().heightPixels, 0);
-
         try {
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("DZIDZIO.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Tyrion speech during trial.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Grasshopper.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Neo vs. Luke Skywalker.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("ne_lyubish.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("ostanus.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("O_TORVALD_Ne_vona.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_cofe.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("Batman vs Dracula.mp4", getActivity().getAssets().openFd("Batman vs Dracula.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("DZIDZIO.mp4", getActivity().getAssets().openFd("DZIDZIO.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("Tyrion speech during trial.mp4.mp4", getActivity().getAssets().openFd("Tyrion speech during trial.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("Grasshopper.mp4", getActivity().getAssets().openFd("Grasshopper.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("Neo vs. Luke Skywalker.mp4.mp4", getActivity().getAssets().openFd("Neo vs. Luke Skywalker.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("ne_lyubish.mp4", getActivity().getAssets().openFd("ne_lyubish.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("ostanus.mp4", getActivity().getAssets().openFd("ostanus.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("O_TORVALD_Ne_vona.mp4", getActivity().getAssets().openFd("O_TORVALD_Ne_vona.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("Nervy_cofe.mp4.mp4", getActivity().getAssets().openFd("Nervy_cofe.mp4"), mVideoPlayerManager));
 //            mList.add(new DirectLinkVideoItem("https://duw49sogxuf9v.cloudfront.net/d/c/MlYeMAJVR21vBwdhCzE"));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("DZIDZIO.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Tyrion speech during trial.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Grasshopper.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Neo vs. Luke Skywalker.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("ne_lyubish.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("ostanus.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Batman vs Dracula.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("O_TORVALD_Ne_vona.mp4"), mVideoPlayerManager));
-            mList.add(new LocalVideoItem(getActivity().getAssets().openFd("Nervy_cofe.mp4"), mVideoPlayerManager));
-//            mList.add(new DirectLinkVideoItem("https://duw49sogxuf9v.cloudfront.net/d/c/MlYeMAJVR21vBwdhCzE"));
+            mList.add(new LocalVideoItem("Batman vs Dracula.mp4", getActivity().getAssets().openFd("Batman vs Dracula.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("DZIDZIO.mp4", getActivity().getAssets().openFd("DZIDZIO.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("Tyrion speech during trial.mp4.mp4", getActivity().getAssets().openFd("Tyrion speech during trial.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("Grasshopper.mp4", getActivity().getAssets().openFd("Grasshopper.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("Neo vs. Luke Skywalker.mp4.mp4", getActivity().getAssets().openFd("Neo vs. Luke Skywalker.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("ne_lyubish.mp4", getActivity().getAssets().openFd("ne_lyubish.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("ostanus.mp4", getActivity().getAssets().openFd("ostanus.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("O_TORVALD_Ne_vona.mp4", getActivity().getAssets().openFd("O_TORVALD_Ne_vona.mp4"), mVideoPlayerManager));
+            mList.add(new LocalVideoItem("Nervy_cofe.mp4.mp4", getActivity().getAssets().openFd("Nervy_cofe.mp4"), mVideoPlayerManager));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -107,7 +102,7 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
     public void onScrollStateChanged(AbsListView view, int scrollState) {
         mScrollState = scrollState;
         if(scrollState == SCROLL_STATE_IDLE && !mList.isEmpty()){
-            mVideoVisibilityCalculator.onScrollStateIdle(view);
+            mVideoVisibilityCalculator.onScrollStateIdle(view, view.getFirstVisiblePosition(), view.getLastVisiblePosition());
         }
     }
 
