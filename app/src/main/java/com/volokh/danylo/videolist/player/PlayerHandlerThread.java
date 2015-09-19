@@ -74,7 +74,7 @@ public class PlayerHandlerThread {
         mQueueLock.unlock(TAG);
     }
 
-    public void addMessages(List<PlayerMessage> messages) {
+    public void addMessages(List<? extends Message> messages) {
         if (SHOW_LOGS) Logger.v(TAG, ">> addMessages, lock " + messages);
         mQueueLock.lock(TAG);
 

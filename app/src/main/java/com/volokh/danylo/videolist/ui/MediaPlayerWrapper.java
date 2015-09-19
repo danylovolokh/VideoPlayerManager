@@ -1,4 +1,4 @@
-package com.volokh.danylo.videolist;
+package com.volokh.danylo.videolist.ui;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Surface;
 
+import com.volokh.danylo.videolist.Config;
 import com.volokh.danylo.videolist.utils.Logger;
 
 import java.io.FileDescriptor;
@@ -19,7 +20,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MediaPlayerWrapper
+public abstract class MediaPlayerWrapper
         implements MediaPlayer.OnErrorListener,
         MediaPlayer.OnBufferingUpdateListener,
         MediaPlayer.OnInfoListener,
@@ -56,7 +57,7 @@ public class MediaPlayerWrapper
 
     private ScheduledExecutorService mPositionUpdateNotifier = Executors.newScheduledThreadPool(1);
 
-    public MediaPlayerWrapper() {
+    protected MediaPlayerWrapper(MediaPlayer mediaPlayer) {
         TAG = "" + this;
         if (SHOW_LOGS) Logger.v(TAG, "constructor of MediaPlayerWrapper");
         if (SHOW_LOGS) Logger.v(TAG, "constructor of MediaPlayerWrapper, main Looper " + Looper.getMainLooper());
@@ -65,7 +66,7 @@ public class MediaPlayerWrapper
         if(Looper.myLooper() != null){
             throw new RuntimeException("myLooper not null, a bug in some MediaPlayer implementation cause that listeners are not called at all. Please use a thread without Looper");
         }
-        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer = mediaPlayer;
 
         mState.set(State.IDLE);
         mMediaPlayer.setOnVideoSizeChangedListener(this);
@@ -366,8 +367,8 @@ public class MediaPlayerWrapper
                 case STOPPED:
                 case PREPARED:
                 case END:
-                    if (SHOW_LOGS) Logger.err(TAG, "pause, called from illegal state " + mState);
-                    break;
+                    throw new IllegalStateException("pause, called from illegal state "  + mState);
+
                 case STARTED:
                     mMediaPlayer.pause();
                     mState.set(State.PAUSED);
@@ -403,14 +404,13 @@ public class MediaPlayerWrapper
                     mState.set(State.STOPPED);
                     break;
                 case STOPPED:
-                    if (SHOW_LOGS) Logger.v(TAG, "stop, already stopped");
-                    break;
+                    throw new IllegalStateException("stop, already stopped");
+
                 case IDLE:
                 case INITIALIZED:
                 case END:
                 case ERROR:
-                    if (SHOW_LOGS) Logger.v(TAG, "stop, cannot stop. Player in mState " + mState);
-                    break;
+                    throw new IllegalStateException("cannot stop. Player in mState " + mState);
             }
         }
         if (SHOW_LOGS) Logger.v(TAG, "<< stop");

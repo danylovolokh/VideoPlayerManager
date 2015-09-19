@@ -14,7 +14,6 @@ import android.view.TextureView;
 import android.view.View;
 
 import com.volokh.danylo.videolist.Config;
-import com.volokh.danylo.videolist.MediaPlayerWrapper;
 import com.volokh.danylo.videolist.utils.HandlerThreadExtension;
 import com.volokh.danylo.videolist.utils.Logger;
 
@@ -30,7 +29,7 @@ public class VideoPlayerView extends ScalableTextureView
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
     private String TAG;
 
-    private static final String IS_VIDEO_LIST_MUTED = "IS_VIDEO_LIST_MUTED";
+    private static final String IS_VIDEO_MUTED = "IS_VIDEO_MUTED";
 
     /**
      * MediaPlayerWrapper instance.
@@ -127,7 +126,7 @@ public class VideoPlayerView extends ScalableTextureView
         checkThread();
         synchronized (mReadyForPlaybackIndicator){
 
-            mMediaPlayer = new MediaPlayerWrapper();
+            mMediaPlayer = new MediaPlayerWrapperImpl();
 
             mReadyForPlaybackIndicator.setVideoSize(null, null);
             mReadyForPlaybackIndicator.setFailedToPrepareUiForPlayback(false);
@@ -255,6 +254,10 @@ public class VideoPlayerView extends ScalableTextureView
 
     public void setMediaPlayerListener(MediaPlayerWrapper.MainThreadMediaPlayerListener listener) {
         mMediaPlayerListenerMainThread = listener;
+    }
+
+    public void setBackgroundThreadMediaPlayerListener(BackgroundThreadMediaPlayerListener listener) {
+        mMediaPlayerListenerBackgroundThread = listener;
     }
 
     @Override
@@ -399,20 +402,20 @@ public class VideoPlayerView extends ScalableTextureView
 
     public void muteVideo() {
         synchronized (mReadyForPlaybackIndicator) {
-            PreferenceManager.getDefaultSharedPreferences(getContext()).edit().putBoolean(IS_VIDEO_LIST_MUTED, true).commit();
+            PreferenceManager.getDefaultSharedPreferences(getContext()).edit().putBoolean(IS_VIDEO_MUTED, true).commit();
             mMediaPlayer.setVolume(0, 0);
         }
     }
 
     public void unMuteVideo() {
         synchronized (mReadyForPlaybackIndicator) {
-            PreferenceManager.getDefaultSharedPreferences(getContext()).edit().putBoolean(IS_VIDEO_LIST_MUTED, false).commit();
+            PreferenceManager.getDefaultSharedPreferences(getContext()).edit().putBoolean(IS_VIDEO_MUTED, false).commit();
             mMediaPlayer.setVolume(1, 1);
         }
     }
 
     public boolean isAllVideoMute() {
-        return PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean(IS_VIDEO_LIST_MUTED, false);
+        return PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean(IS_VIDEO_MUTED, false);
     }
 
     public void pause() {

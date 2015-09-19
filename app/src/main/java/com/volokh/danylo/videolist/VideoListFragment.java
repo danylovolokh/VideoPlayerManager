@@ -83,9 +83,10 @@ public class VideoListFragment extends Fragment implements AbsListView.OnScrollL
                 @Override
                 public void run() {
 
-                    ListItem currentItem = mList.get(0);
-                    View currentView = mListView.getChildAt(0);
-                    currentItem.setActive(currentView, 0);
+                    mVideoVisibilityCalculator.onScrollStateIdle(
+                            mListView,
+                            mListView.getFirstVisiblePosition(),
+                            mListView.getLastVisiblePosition());
 
                 }
             });
