@@ -1,9 +1,9 @@
 package com.volokh.danylo.videolist.utils;
 
 import android.view.View;
-import android.widget.AbsListView;
 
 import com.volokh.danylo.videolist.Config;
+import com.volokh.danylo.videolist.adapter.visibilityutils.ItemsPositionGetter;
 
 /**
  * This class detects a {@link ScrollDirection} ListView is scrolled to.
@@ -35,11 +35,12 @@ public class ScrollDirectionDetector {
         UP, DOWN
     }
 
-    public void onDetectedListScroll(AbsListView absListView, int firstVisibleItem) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> onDetectedListScroll");
+    public void onDetectedListScroll(ItemsPositionGetter itemsPositionGetter, int firstVisibleItem) {
+        if(SHOW_LOGS) Logger.v(TAG, ">> onDetectedListScroll, firstVisibleItem " + firstVisibleItem + ", mOldFirstVisibleItem " + mOldFirstVisibleItem);
 
-        View view = absListView.getChildAt(0);
+        View view = itemsPositionGetter.getChildAt(0);
         int top = (view == null) ? 0 : view.getTop();
+        if(SHOW_LOGS) Logger.v(TAG, "onDetectedListScroll, view " + view + ", top " + top + ", mOldTop " +mOldTop);
 
         if (firstVisibleItem == mOldFirstVisibleItem) {
             if (top > mOldTop) {
@@ -61,6 +62,8 @@ public class ScrollDirectionDetector {
     }
 
     private void onScrollDown() {
+        if(SHOW_LOGS) Logger.v(TAG, "onScroll Down");
+
         if(mOldScrollDirection != ScrollDirection.DOWN){
             mOldScrollDirection = ScrollDirection.DOWN;
             mOnDetectScrollListener.onScrollDirectionChanged(ScrollDirection.DOWN);
@@ -70,6 +73,8 @@ public class ScrollDirectionDetector {
     }
 
     private void onScrollUp() {
+        if(SHOW_LOGS) Logger.v(TAG, "onScroll Up");
+
         if(mOldScrollDirection != ScrollDirection.UP) {
             mOldScrollDirection = ScrollDirection.UP;
             mOnDetectScrollListener.onScrollDirectionChanged(ScrollDirection.UP);

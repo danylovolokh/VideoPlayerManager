@@ -5,18 +5,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import com.volokh.danylo.videolist.adapter.holders.VideoViewHolder;
 import com.volokh.danylo.videolist.player.manager.VideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.items.VideoItem;
 
 import java.util.List;
 
-public class VideoListAdapter extends BaseAdapter {
+public class VideoListViewAdapter extends BaseAdapter {
 
     private final VideoPlayerManager mVideoPlayerManager;
     private final List<VideoItem> mList;
     private final Context mContext;
 
-    public VideoListAdapter(VideoPlayerManager videoPlayerManager, Context context, List<VideoItem> list){
+    public VideoListViewAdapter(VideoPlayerManager videoPlayerManager, Context context, List<VideoItem> list){
         mVideoPlayerManager = videoPlayerManager;
         mContext = context;
         mList = list;
@@ -50,7 +51,8 @@ public class VideoListAdapter extends BaseAdapter {
             resultView = convertView;
         }
 
-        return videoItem.update(position, resultView, mVideoPlayerManager);
+        videoItem.update(position, (VideoViewHolder) resultView.getTag(), mVideoPlayerManager);
+        return resultView;
     }
 
 }

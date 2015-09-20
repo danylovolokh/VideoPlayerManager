@@ -45,8 +45,8 @@ public abstract class BaseVideoItem implements VideoItem {
     public View createView(ViewGroup parent, int screenWidth) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.video_item, parent, false);
         ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-        layoutParams.height = screenWidth + 10;
-        layoutParams.width = screenWidth;
+        layoutParams.height = screenWidth / 2;
+        layoutParams.width = screenWidth / 2;
 
         view.setTag(new VideoViewHolder(view));
         return view;

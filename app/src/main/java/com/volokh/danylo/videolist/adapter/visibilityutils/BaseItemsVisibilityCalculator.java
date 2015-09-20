@@ -13,19 +13,19 @@ public abstract class BaseItemsVisibilityCalculator implements ListItemsVisibili
     private final ScrollDirectionDetector mScrollDirectionDetector = new ScrollDirectionDetector(this);
 
     @Override
-    public void onScroll(AbsListView listView, int firstVisibleItem, int visibleItemCount, int scrollState/*TODO: add current item here. start tracking from it*/) {
+    public void onScroll(ItemsPositionGetter itemsPositionGetter, int firstVisibleItem, int visibleItemCount, int scrollState/*TODO: add current item here. start tracking from it*/) {
         if (SHOW_LOGS) Logger.v(TAG, ">> onScroll");
 
         if (SHOW_LOGS)
             Logger.v(TAG, "onScroll, firstVisibleItem " + firstVisibleItem + ", visibleItemCount " + visibleItemCount + ", scrollState " + scrollStateStr(scrollState));
-        mScrollDirectionDetector.onDetectedListScroll(listView, firstVisibleItem);
+        mScrollDirectionDetector.onDetectedListScroll(itemsPositionGetter, firstVisibleItem);
 
         switch (scrollState) {
             case AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
-                onStateTouchScroll(listView);
+                onStateTouchScroll(itemsPositionGetter);
                 break;
             case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
-                onStateFling(listView);
+                onStateFling(itemsPositionGetter);
                 break;
 
             case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:
@@ -34,8 +34,8 @@ public abstract class BaseItemsVisibilityCalculator implements ListItemsVisibili
         }
     }
 
-    protected abstract void onStateFling(AbsListView listView);
-    protected abstract void onStateTouchScroll(AbsListView listView);
+    protected abstract void onStateFling(ItemsPositionGetter itemsPositionGetter);
+    protected abstract void onStateTouchScroll(ItemsPositionGetter itemsPositionGetter);
 
     private String scrollStateStr(int scrollState){
         switch (scrollState){

@@ -13,7 +13,8 @@ public class VideoListActivity extends ActionBarActivity {
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new VideoListFragment())
+                    .add(R.id.right_container, new VideoRecyclerViewFragment())
+                    .add(R.id.left_container, new VideoListFragment())
                     .commit();
         }
     }

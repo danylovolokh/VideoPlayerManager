@@ -20,11 +20,8 @@ public class LocalVideoItem extends BaseVideoItem{
     }
 
     @Override
-    public View update(int position, View view, VideoPlayerManager videoPlayerManager) {
-        VideoViewHolder viewHolder = (VideoViewHolder) view.getTag();
+    public void update(int position, VideoViewHolder viewHolder, VideoPlayerManager videoPlayerManager) {
         viewHolder.mTitle.setText(mTitle);
-//        videoPlayerManager.playNewVideo(new CurrentItemMetaData(position), viewHolder.mPlayer, mAssetFileDescriptor, viewHolder.mListItemView);
-        return view;
     }
 
 
