@@ -25,7 +25,7 @@ public abstract class BaseItemsVisibilityCalculator implements ListItemsVisibili
                 onStateTouchScroll(itemsPositionGetter);
                 break;
             case AbsListView.OnScrollListener.SCROLL_STATE_FLING:
-                onStateFling(itemsPositionGetter);
+                onStateTouchScroll(itemsPositionGetter);
                 break;
 
             case AbsListView.OnScrollListener.SCROLL_STATE_IDLE:

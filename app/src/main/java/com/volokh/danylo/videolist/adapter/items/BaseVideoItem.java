@@ -9,6 +9,7 @@ import com.volokh.danylo.videolist.R;
 import com.volokh.danylo.videolist.adapter.holders.VideoViewHolder;
 import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
 import com.volokh.danylo.videolist.player.manager.VideoPlayerManager;
+import com.volokh.danylo.videolist.ui.MediaPlayerWrapper;
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
 import com.volokh.danylo.videolist.utils.Logger;
 
@@ -45,10 +46,38 @@ public abstract class BaseVideoItem implements VideoItem {
     public View createView(ViewGroup parent, int screenWidth) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.video_item, parent, false);
         ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-        layoutParams.height = screenWidth / 2;
-        layoutParams.width = screenWidth / 2;
+        layoutParams.height = screenWidth;
 
-        view.setTag(new VideoViewHolder(view));
+        final VideoViewHolder videoViewHolder = new VideoViewHolder(view);
+        view.setTag(videoViewHolder);
+
+        videoViewHolder.mPlayer.addMediaPlayerListener(new MediaPlayerWrapper.MainThreadMediaPlayerListener() {
+            @Override
+            public void onVideoSizeChangedMainThread(int width, int height) {
+            }
+
+            @Override
+            public void onVideoPreparedMainThread() {
+                videoViewHolder.mCover.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onVideoCompletionMainThread() {
+            }
+
+            @Override
+            public void onErrorMainThread(int what, int extra) {
+            }
+
+            @Override
+            public void onBufferingUpdateMainThread(int percent) {
+            }
+
+            @Override
+            public void onVideoStoppedMainThread() {
+                videoViewHolder.mCover.setVisibility(View.VISIBLE);
+            }
+        });
         return view;
     }
 
@@ -77,9 +106,16 @@ public abstract class BaseVideoItem implements VideoItem {
             percents = mCurrentViewRect.bottom * 100 / height;
         }
 
+        setVisibilityPercentsText(currentView, percents);
         if(SHOW_LOGS) Logger.v(TAG, "<< getVisibilityPercents, percents " + percents);
 
         return percents;
+    }
+
+    private void setVisibilityPercentsText(View currentView, int percents) {
+        if(SHOW_LOGS) Logger.v(TAG, "setVisibilityPercentsText percents " + percents);
+        VideoViewHolder videoViewHolder = (VideoViewHolder) currentView.getTag();
+        videoViewHolder.mVisibilityPercents.setText("Visibility percents: " + String.valueOf(percents));
     }
 
     private boolean viewIsPartiallyHiddenBottom(int height) {

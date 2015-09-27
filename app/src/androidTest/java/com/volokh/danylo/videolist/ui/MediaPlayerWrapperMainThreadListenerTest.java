@@ -54,6 +54,11 @@ public class MediaPlayerWrapperMainThreadListenerTest {
         @Override
         public void onBufferingUpdateMainThread(int percent) {
         }
+
+        @Override
+        public void onVideoStoppedMainThread() {
+
+        }
     };
 
     @Before

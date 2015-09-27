@@ -378,6 +378,15 @@ public abstract class MediaPlayerWrapper
         if (SHOW_LOGS) Logger.v(TAG, "<< pause");
     }
 
+    private final Runnable mOnVideoStopMessage = new Runnable() {
+        @Override
+        public void run() {
+            if (SHOW_LOGS) Logger.v(TAG, ">> run, onVideoStoppedMainThread");
+            mListener.onVideoStoppedMainThread();
+            if (SHOW_LOGS) Logger.v(TAG, "<< run, onVideoStoppedMainThread");
+        }
+    };
+
     public void stop() {
         if (SHOW_LOGS) Logger.v(TAG, ">> stop");
 
@@ -402,6 +411,10 @@ public abstract class MediaPlayerWrapper
                     if (SHOW_LOGS) Logger.v(TAG, "<< stop");
 
                     mState.set(State.STOPPED);
+
+                    if (mListener != null) {
+                        mMainThreadHandler.post(mOnVideoStopMessage);
+                    }
                     break;
                 case STOPPED:
                     throw new IllegalStateException("stop, already stopped");
@@ -640,6 +653,8 @@ public abstract class MediaPlayerWrapper
         void onErrorMainThread(int what, int extra);
 
         void onBufferingUpdateMainThread(int percent);
+
+        void onVideoStoppedMainThread();
     }
 
     public interface VideoStateListener {

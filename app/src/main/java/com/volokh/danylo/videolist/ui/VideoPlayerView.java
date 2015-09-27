@@ -18,13 +18,16 @@ import com.volokh.danylo.videolist.utils.HandlerThreadExtension;
 import com.volokh.danylo.videolist.utils.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author danylo.volokh
  */
 public class VideoPlayerView extends ScalableTextureView
         implements TextureView.SurfaceTextureListener,
-        MediaPlayerWrapper.MainThreadMediaPlayerListener, MediaPlayerWrapper.VideoStateListener {
+        MediaPlayerWrapper.MainThreadMediaPlayerListener,
+        MediaPlayerWrapper.VideoStateListener {
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
     private String TAG;
@@ -39,18 +42,24 @@ public class VideoPlayerView extends ScalableTextureView
     private MediaPlayerWrapper mMediaPlayer;
     private HandlerThreadExtension mViewHandlerBackgroundThread;
 
-    private MediaPlayerWrapper.MainThreadMediaPlayerListener mMediaPlayerListenerMainThread;
     /**
      * A Listener that propagates {@link MediaPlayer} listeners is background thread.
      * Probably call of this listener should also need to be synchronized with it creation and destroy places.
      */
     private BackgroundThreadMediaPlayerListener mMediaPlayerListenerBackgroundThread;
 
-    private PlaybackStartedListener mPlaybackStartedListener;
     private MediaPlayerWrapper.VideoStateListener mVideoStateListener;
     private SurfaceTextureListener mLocalSurfaceTextureListener;
 
     private final ReadyForPlaybackIndicator mReadyForPlaybackIndicator = new ReadyForPlaybackIndicator();
+
+    private final List<MediaPlayerWrapper.MainThreadMediaPlayerListener> mMediaPlayerMainThreadListeners = new ArrayList<>();
+
+    public MediaPlayerWrapper.State getCurrentState() {
+        synchronized (mReadyForPlaybackIndicator) {
+            return mMediaPlayer.getCurrentState();
+        }
+    }
 
     public interface BackgroundThreadMediaPlayerListener {
         void onVideoSizeChangedBackgroundThread(int width, int height);
@@ -144,11 +153,10 @@ public class VideoPlayerView extends ScalableTextureView
         if (SHOW_LOGS) Logger.v(TAG, "<< createNewPlayerInstance");
     }
 
-    public MediaPlayerWrapper.State prepare() {
+    public void prepare() {
         checkThread();
         synchronized (mReadyForPlaybackIndicator) {
             mMediaPlayer.prepare();
-            return mMediaPlayer.getCurrentState();
         }
     }
 
@@ -156,6 +164,17 @@ public class VideoPlayerView extends ScalableTextureView
         checkThread();
         synchronized (mReadyForPlaybackIndicator) {
             mMediaPlayer.stop();
+        }
+    }
+
+    private void notifyOnVideoStopped() {
+        if (SHOW_LOGS) Logger.v(TAG, "notifyOnVideoStopped");
+        List<MediaPlayerWrapper.MainThreadMediaPlayerListener> listCopy;
+        synchronized (mMediaPlayerMainThreadListeners){
+            listCopy = new ArrayList<>(mMediaPlayerMainThreadListeners);
+        }
+        for (MediaPlayerWrapper.MainThreadMediaPlayerListener listener : listCopy){
+            listener.onVideoStoppedMainThread();
         }
     }
 
@@ -248,12 +267,10 @@ public class VideoPlayerView extends ScalableTextureView
         }
     }
 
-    public void setPlaybackStartedListener(PlaybackStartedListener listener) {
-        mPlaybackStartedListener = listener;
-    }
-
-    public void setMediaPlayerListener(MediaPlayerWrapper.MainThreadMediaPlayerListener listener) {
-        mMediaPlayerListenerMainThread = listener;
+    public void addMediaPlayerListener(MediaPlayerWrapper.MainThreadMediaPlayerListener listener) {
+        synchronized (mMediaPlayerMainThreadListeners){
+            mMediaPlayerMainThreadListeners.add(listener);
+        }
     }
 
     public void setBackgroundThreadMediaPlayerListener(BackgroundThreadMediaPlayerListener listener) {
@@ -279,11 +296,20 @@ public class VideoPlayerView extends ScalableTextureView
             }
         }
 
-        if (mMediaPlayerListenerMainThread != null) {
-            mMediaPlayerListenerMainThread.onVideoSizeChangedMainThread(width, height);
-        }
+        notifyOnVideoSizeChangedMainThread(width, height);
 
         if (SHOW_LOGS) Logger.v(TAG, "<< onVideoSizeChangedMainThread, width " + width + ", height " + height);
+    }
+
+    private void notifyOnVideoSizeChangedMainThread(int width, int height) {
+        if (SHOW_LOGS) Logger.v(TAG, "notifyOnVideoSizeChangedMainThread, width " + width + ", height " + height);
+        List<MediaPlayerWrapper.MainThreadMediaPlayerListener> listCopy;
+        synchronized (mMediaPlayerMainThreadListeners){
+            listCopy = new ArrayList<>(mMediaPlayerMainThreadListeners);
+        }
+        for (MediaPlayerWrapper.MainThreadMediaPlayerListener listener : listCopy){
+            listener.onVideoSizeChangedMainThread(width, height);
+        }
     }
 
     private final Runnable mVideoCompletionBackgroundThreadRunnable = new Runnable() {
@@ -295,11 +321,31 @@ public class VideoPlayerView extends ScalableTextureView
 
     @Override
     public void onVideoCompletionMainThread() {
-        if (mMediaPlayerListenerMainThread != null) {
-            mMediaPlayerListenerMainThread.onVideoCompletionMainThread();
-        }
+        notifyOnVideoCompletionMainThread();
         if (mMediaPlayerListenerBackgroundThread != null) {
             mViewHandlerBackgroundThread.post(mVideoCompletionBackgroundThreadRunnable);
+        }
+    }
+
+    private void notifyOnVideoCompletionMainThread() {
+        if (SHOW_LOGS) Logger.v(TAG, "notifyVideoCompletionMainThread");
+        List<MediaPlayerWrapper.MainThreadMediaPlayerListener> listCopy;
+        synchronized (mMediaPlayerMainThreadListeners){
+            listCopy = new ArrayList<>(mMediaPlayerMainThreadListeners);
+        }
+        for (MediaPlayerWrapper.MainThreadMediaPlayerListener listener : listCopy) {
+            listener.onVideoCompletionMainThread();
+        }
+    }
+
+    private void notifyOnVideoPreparedMainThread() {
+        if (SHOW_LOGS) Logger.v(TAG, "notifyOnVideoPreparedMainThread");
+        List<MediaPlayerWrapper.MainThreadMediaPlayerListener> listCopy;
+        synchronized (mMediaPlayerMainThreadListeners){
+            listCopy = new ArrayList<>(mMediaPlayerMainThreadListeners);
+        }
+        for (MediaPlayerWrapper.MainThreadMediaPlayerListener listener : listCopy) {
+            listener.onVideoPreparedMainThread();
         }
     }
 
@@ -312,9 +358,8 @@ public class VideoPlayerView extends ScalableTextureView
 
     @Override
     public void onVideoPreparedMainThread() {
-        if (mMediaPlayerListenerMainThread != null) {
-            mMediaPlayerListenerMainThread.onVideoPreparedMainThread();
-        }
+        notifyOnVideoPreparedMainThread();
+
         if (mMediaPlayerListenerBackgroundThread != null) {
             mViewHandlerBackgroundThread.post(mVideoPreparedBackgroundThreadRunnable);
         }
@@ -346,6 +391,11 @@ public class VideoPlayerView extends ScalableTextureView
     @Override
     public void onBufferingUpdateMainThread(int percent) {
 
+    }
+
+    @Override
+    public void onVideoStoppedMainThread() {
+        notifyOnVideoStopped();
     }
 
     private void printErrorExtra(int extra) {
@@ -394,7 +444,9 @@ public class VideoPlayerView extends ScalableTextureView
 
         updateTextureViewSize();
 
-        mViewHandlerBackgroundThread.post(mVideoSizeAvailableRunnable);
+        if(isAttachedToWindow()){
+            mViewHandlerBackgroundThread.post(mVideoSizeAvailableRunnable);
+        }
 
         if (SHOW_LOGS) Logger.v(TAG, "<< onVideoSizeAvailable");
     }

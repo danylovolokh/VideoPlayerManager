@@ -3,6 +3,7 @@ package com.volokh.danylo.videolist.adapter.items;
 import android.content.res.AssetFileDescriptor;
 import android.view.View;
 
+import com.squareup.picasso.Picasso;
 import com.volokh.danylo.videolist.adapter.holders.VideoViewHolder;
 import com.volokh.danylo.videolist.player.manager.VideoPlayerManager;
 import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
@@ -13,15 +14,22 @@ public class LocalVideoItem extends BaseVideoItem{
     private final AssetFileDescriptor mAssetFileDescriptor;
     private final String mTitle;
 
-    public LocalVideoItem(String title, AssetFileDescriptor assetFileDescriptor, VideoPlayerManager videoPlayerManager) {
+    private final Picasso mImageLoader;
+    private final int mImageResource;
+
+    public LocalVideoItem(String title, AssetFileDescriptor assetFileDescriptor, VideoPlayerManager videoPlayerManager, Picasso imageLoader, int imageResource) {
         super(videoPlayerManager);
-        mAssetFileDescriptor = assetFileDescriptor;
         mTitle = title;
+        mAssetFileDescriptor = assetFileDescriptor;
+        mImageLoader = imageLoader;
+        mImageResource = imageResource;
     }
 
     @Override
-    public void update(int position, VideoViewHolder viewHolder, VideoPlayerManager videoPlayerManager) {
+    public void update(int position, final VideoViewHolder viewHolder, VideoPlayerManager videoPlayerManager) {
         viewHolder.mTitle.setText(mTitle);
+        viewHolder.mCover.setVisibility(View.VISIBLE);
+        mImageLoader.load(mImageResource).into(viewHolder.mCover);
     }
 
 

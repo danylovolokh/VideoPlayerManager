@@ -20,7 +20,9 @@ public class Prepare extends PlayerMessage{
     @Override
     protected void performAction(VideoPlayerView currentPlayer) {
 
-        MediaPlayerWrapper.State resultOfPrepare = currentPlayer.prepare();
+        currentPlayer.prepare();
+
+        MediaPlayerWrapper.State resultOfPrepare = currentPlayer.getCurrentState();
         if(SHOW_LOGS) Logger.v(TAG, "resultOfPrepare " + resultOfPrepare);
 
         switch (resultOfPrepare){

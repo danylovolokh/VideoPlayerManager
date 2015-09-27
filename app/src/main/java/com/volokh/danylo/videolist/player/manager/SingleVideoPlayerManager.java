@@ -17,13 +17,14 @@ import com.volokh.danylo.videolist.player.SetNewViewForPlayback;
 import com.volokh.danylo.videolist.player.SetUrlDataSourceMessage;
 import com.volokh.danylo.videolist.player.Start;
 import com.volokh.danylo.videolist.player.Stop;
+import com.volokh.danylo.videolist.ui.MediaPlayerWrapper;
 import com.volokh.danylo.videolist.ui.VideoPlayerView;
 import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
 import com.volokh.danylo.videolist.utils.Logger;
 
 import java.util.Arrays;
 
-public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemMetaData>, VideoPlayerManagerCallback {
+public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemMetaData>, VideoPlayerManagerCallback, MediaPlayerWrapper.MainThreadMediaPlayerListener {
 
     private static final String TAG = SingleVideoPlayerManager.class.getSimpleName();
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
@@ -63,19 +64,41 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
 
         mPlayerHandler.pauseQueueProcessing(TAG);
 
-
+        boolean currentPlayerIsActive = mCurrentPlayer == videoPlayerView;
+        if (SHOW_LOGS) Logger.v(TAG, "playNewVideo, currentPlayerIsActive " + currentPlayerIsActive);
         if (SHOW_LOGS) Logger.v(TAG, "playNewVideo, mCurrentPlayerState " + mCurrentPlayerState);
+
+        if(currentPlayerIsActive){
+            if(!isPlaying()){
+                startNewPlayback(currentItemMetaData, videoPlayerView, assetFileDescriptor, listItemView);
+            } else {
+                if(SHOW_LOGS) Logger.v(TAG, "playNewVideo, videoPlayer " + videoPlayerView + " is already in state " + mCurrentPlayerState);
+            }
+        } else {
+            startNewPlayback(currentItemMetaData, videoPlayerView, assetFileDescriptor, listItemView);
+        }
+
+        mPlayerHandler.resumeQueueProcessing(TAG);
+
+        if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayerView + ", assetFileDescriptor " + assetFileDescriptor);
+    }
+
+    private boolean isPlaying() {
+        boolean isPlaying = mCurrentPlayerState == PlayerMessageState.STARTED || mCurrentPlayerState == PlayerMessageState.STARTING;
+        if(SHOW_LOGS) Logger.v(TAG, "isPlaying, " + isPlaying);
+        return isPlaying;
+    }
+
+    private void startNewPlayback(CurrentItemMetaData currentItemMetaData, VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor, View listItemView) {
+        // set listener for new player
+        videoPlayerView.addMediaPlayerListener(this);
+        if (SHOW_LOGS) Logger.v(TAG, "startNewPlayback, mCurrentPlayerState " + mCurrentPlayerState);
 
         mPlayerHandler.clearAllPendingMessages(TAG);
 
         stopResetReleaseClearCurrentPlayer();
         setNewViewForPlayback(currentItemMetaData, videoPlayerView, listItemView);
         startPlayback(videoPlayerView, assetFileDescriptor);
-
-        mPlayerHandler.resumeQueueProcessing(TAG);
-
-
-        if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayerView + ", assetFileDescriptor " + assetFileDescriptor);
     }
 
     @Override
@@ -248,5 +271,34 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
     public PlayerMessageState getCurrentPlayerState() {
         if(SHOW_LOGS) Logger.v(TAG, "getCurrentPlayerState, mCurrentPlayerState " + mCurrentPlayerState);
         return mCurrentPlayerState;
+    }
+
+    @Override
+    public void onVideoSizeChangedMainThread(int width, int height) {
+    }
+
+    @Override
+    public void onVideoPreparedMainThread() {
+    }
+
+    @Override
+    public void onVideoCompletionMainThread() {
+    }
+
+    @Override
+    public void onErrorMainThread(int what, int extra) {
+        /** if error happen during playback, we need to set error state.
+         * Because we cannot run some messages in Error state
+        for example {@link com.volokh.danylo.videolist.player.Stop}*/
+        mCurrentPlayerState = PlayerMessageState.ERROR;
+    }
+
+    @Override
+    public void onBufferingUpdateMainThread(int percent) {
+    }
+
+    @Override
+    public void onVideoStoppedMainThread() {
+
     }
 }
