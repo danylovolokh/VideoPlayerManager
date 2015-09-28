@@ -65,14 +65,18 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
         mPlayerHandler.pauseQueueProcessing(TAG);
 
         boolean currentPlayerIsActive = mCurrentPlayer == videoPlayerView;
+        boolean isAlreadyPlayingTheFile =
+                mCurrentPlayer != null &&
+                mCurrentPlayer.getAssetFileDescriptorDataSource() == assetFileDescriptor;
+
+        if (SHOW_LOGS) Logger.v(TAG, "playNewVideo, isAlreadyPlayingTheFile " + isAlreadyPlayingTheFile);
         if (SHOW_LOGS) Logger.v(TAG, "playNewVideo, currentPlayerIsActive " + currentPlayerIsActive);
-        if (SHOW_LOGS) Logger.v(TAG, "playNewVideo, mCurrentPlayerState " + mCurrentPlayerState);
 
         if(currentPlayerIsActive){
-            if(!isPlaying()){
-                startNewPlayback(currentItemMetaData, videoPlayerView, assetFileDescriptor, listItemView);
-            } else {
+            if(isInPlaybackState() && isAlreadyPlayingTheFile){
                 if(SHOW_LOGS) Logger.v(TAG, "playNewVideo, videoPlayer " + videoPlayerView + " is already in state " + mCurrentPlayerState);
+            } else {
+                startNewPlayback(currentItemMetaData, videoPlayerView, assetFileDescriptor, listItemView);
             }
         } else {
             startNewPlayback(currentItemMetaData, videoPlayerView, assetFileDescriptor, listItemView);
@@ -83,9 +87,9 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
         if(SHOW_LOGS) Logger.v(TAG, "<< playNewVideo, videoPlayer " + videoPlayerView + ", assetFileDescriptor " + assetFileDescriptor);
     }
 
-    private boolean isPlaying() {
+    private boolean isInPlaybackState() {
         boolean isPlaying = mCurrentPlayerState == PlayerMessageState.STARTED || mCurrentPlayerState == PlayerMessageState.STARTING;
-        if(SHOW_LOGS) Logger.v(TAG, "isPlaying, " + isPlaying);
+        if(SHOW_LOGS) Logger.v(TAG, "isInPlaybackState, " + isPlaying);
         return isPlaying;
     }
 

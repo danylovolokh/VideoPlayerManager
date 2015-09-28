@@ -42,4 +42,9 @@ public class LocalVideoItem extends BaseVideoItem{
     protected void stopPlayback(VideoPlayerManager videoPlayerManager) {
         videoPlayerManager.stopAnyPlayback();
     }
+
+    @Override
+    public String toString() {
+        return getClass() + ", mTitle[" + mTitle + "]";
+    }
 }

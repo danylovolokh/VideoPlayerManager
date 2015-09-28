@@ -51,6 +51,8 @@ public class VideoPlayerView extends ScalableTextureView
     private MediaPlayerWrapper.VideoStateListener mVideoStateListener;
     private SurfaceTextureListener mLocalSurfaceTextureListener;
 
+    private AssetFileDescriptor mAssetFileDescriptor;
+
     private final ReadyForPlaybackIndicator mReadyForPlaybackIndicator = new ReadyForPlaybackIndicator();
 
     private final List<MediaPlayerWrapper.MainThreadMediaPlayerListener> mMediaPlayerMainThreadListeners = new ArrayList<>();
@@ -59,6 +61,10 @@ public class VideoPlayerView extends ScalableTextureView
         synchronized (mReadyForPlaybackIndicator) {
             return mMediaPlayer.getCurrentState();
         }
+    }
+
+    public AssetFileDescriptor getAssetFileDescriptorDataSource() {
+        return mAssetFileDescriptor;
     }
 
     public interface BackgroundThreadMediaPlayerListener {
@@ -256,6 +262,7 @@ public class VideoPlayerView extends ScalableTextureView
                 Logger.d(TAG, e.getMessage());
                 throw new RuntimeException(e);
             }
+            mAssetFileDescriptor = assetFileDescriptor;
         }
     }
 

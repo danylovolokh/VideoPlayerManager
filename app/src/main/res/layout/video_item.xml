@@ -13,14 +13,21 @@
             android:background="@color/video_thumbnail_placeholder_color"
             android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/visibility_percents_top"
+                android:layout_alignParentTop="true"
+                style="@style/BaseText"/>
+
             <com.volokh.danylo.videolist.ui.VideoPlayerView
                 android:id="@+id/player"
+                android:layout_below="@+id/visibility_percents_top"
                 android:layout_above="@id/title"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
             <ImageView
                 android:id="@+id/cover"
+                android:layout_below="@+id/visibility_percents_top"
                 android:layout_above="@id/title"
                 android:background="@android:color/white"
                 android:layout_width="match_parent"
@@ -28,11 +35,11 @@
 
             <TextView
                 android:id="@+id/title"
-                android:layout_above="@+id/visibility_percents"
+                android:layout_above="@+id/visibility_percents_bottom"
                 style="@style/BaseText"/>
 
             <TextView
-                android:id="@+id/visibility_percents"
+                android:id="@+id/visibility_percents_bottom"
                 android:layout_alignParentBottom="true"
                 style="@style/BaseText"/>
         </RelativeLayout>

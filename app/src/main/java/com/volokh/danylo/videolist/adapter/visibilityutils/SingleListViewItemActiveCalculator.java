@@ -201,7 +201,14 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
         ListItemData mockCurrentItemData;
         switch (mScrollDirection){
             case UP:
-                mockCurrentItemData = new ListItemData().fillWithData(lastVisiblePosition, itemsPositionGetter.getChildAt(itemsPositionGetter.getChildCount() - 1));
+                int lastVisibleItemIndex;
+                if(lastVisiblePosition < 0/*-1 may be returned from ListView*/){
+                    lastVisibleItemIndex = firstVisiblePosition;
+                } else {
+                    lastVisibleItemIndex = lastVisiblePosition;
+                }
+
+                mockCurrentItemData = new ListItemData().fillWithData(lastVisibleItemIndex, itemsPositionGetter.getChildAt(itemsPositionGetter.getChildCount() - 1));
                 break;
             case DOWN:
                 mockCurrentItemData = new ListItemData().fillWithData(firstVisiblePosition, itemsPositionGetter.getChildAt(0/*first visible*/));
