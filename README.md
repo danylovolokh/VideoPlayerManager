@@ -7,7 +7,7 @@ Basically this is a PoC.
 Android MinSdkVersion = 15
 
 # Demo
-[DEMO](https://cloud.githubusercontent.com/assets/2686355/10178901/4a8e4b82-670b-11e5-94a0-77373d8e6f88.gif)
+![](https://cloud.githubusercontent.com/assets/2686355/10178901/4a8e4b82-670b-11e5-94a0-77373d8e6f88.gif)
 
 
 # Problems with video list
