@@ -41,17 +41,27 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
 
     @Override
     public void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView videoPlayerView, String videoUrl, View listItemView) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayerView + ", mCurrentPlayer " + mCurrentPlayer + ", videoUrl " + videoUrl);
-
+        if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayerView + ", mCurrentPlayer " + mCurrentPlayer + ", videoPlayerView " + videoPlayerView);
 
         mPlayerHandler.pauseQueueProcessing(TAG);
-        if (SHOW_LOGS) Logger.v(TAG, "playNewVideo, mCurrentPlayerState " + mCurrentPlayerState);
 
-        mPlayerHandler.clearAllPendingMessages(TAG);
+        boolean currentPlayerIsActive = mCurrentPlayer == videoPlayerView;
+        boolean isAlreadyPlayingTheFile =
+                mCurrentPlayer != null &&
+                        videoUrl.equals(mCurrentPlayer.getVideoUrlDataSource());
 
-        stopResetReleaseClearCurrentPlayer();
-        setNewViewForPlayback(currentItemMetaData, videoPlayerView, listItemView);
-        startPlayback(videoPlayerView, videoUrl);
+        if (SHOW_LOGS) Logger.v(TAG, "playNewVideo, isAlreadyPlayingTheFile " + isAlreadyPlayingTheFile);
+        if (SHOW_LOGS) Logger.v(TAG, "playNewVideo, currentPlayerIsActive " + currentPlayerIsActive);
+
+        if(currentPlayerIsActive){
+            if(isInPlaybackState() && isAlreadyPlayingTheFile){
+                if(SHOW_LOGS) Logger.v(TAG, "playNewVideo, videoPlayer " + videoPlayerView + " is already in state " + mCurrentPlayerState);
+            } else {
+                startNewPlayback(currentItemMetaData, videoPlayerView, videoUrl, listItemView);
+            }
+        } else {
+            startNewPlayback(currentItemMetaData, videoPlayerView, videoUrl, listItemView);
+        }
 
         mPlayerHandler.resumeQueueProcessing(TAG);
 
@@ -103,6 +113,18 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
         stopResetReleaseClearCurrentPlayer();
         setNewViewForPlayback(currentItemMetaData, videoPlayerView, listItemView);
         startPlayback(videoPlayerView, assetFileDescriptor);
+    }
+
+    private void startNewPlayback(CurrentItemMetaData currentItemMetaData, VideoPlayerView videoPlayerView, String videoUrl, View listItemView) {
+        // set listener for new player
+        videoPlayerView.addMediaPlayerListener(this);
+        if (SHOW_LOGS) Logger.v(TAG, "startNewPlayback, mCurrentPlayerState " + mCurrentPlayerState);
+
+        mPlayerHandler.clearAllPendingMessages(TAG);
+
+        stopResetReleaseClearCurrentPlayer();
+        setNewViewForPlayback(currentItemMetaData, videoPlayerView, listItemView);
+        startPlayback(videoPlayerView, videoUrl);
     }
 
     @Override

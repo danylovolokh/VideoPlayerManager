@@ -52,6 +52,7 @@ public class VideoPlayerView extends ScalableTextureView
     private SurfaceTextureListener mLocalSurfaceTextureListener;
 
     private AssetFileDescriptor mAssetFileDescriptor;
+    private String mPath;
 
     private final ReadyForPlaybackIndicator mReadyForPlaybackIndicator = new ReadyForPlaybackIndicator();
 
@@ -65,6 +66,10 @@ public class VideoPlayerView extends ScalableTextureView
 
     public AssetFileDescriptor getAssetFileDescriptorDataSource() {
         return mAssetFileDescriptor;
+    }
+
+    public String getVideoUrlDataSource() {
+        return mPath;
     }
 
     public interface BackgroundThreadMediaPlayerListener {
@@ -246,6 +251,7 @@ public class VideoPlayerView extends ScalableTextureView
                 Logger.d(TAG, e.getMessage());
                 throw new RuntimeException(e);
             }
+            mPath = path;
         }
     }
 
