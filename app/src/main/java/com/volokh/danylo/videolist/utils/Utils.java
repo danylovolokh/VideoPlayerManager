@@ -4,7 +4,8 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import com.volokh.danylo.videolist.Config;
+import com.volokh.danylo.video_player_manager.Config;
+import com.volokh.danylo.video_player_manager.utils.Logger;
 
 public class Utils {
 

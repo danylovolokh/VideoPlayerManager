@@ -1,25 +1,28 @@
 package com.volokh.danylo.videolist.adapter.items;
 
 import android.graphics.Rect;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.volokh.danylo.video_player_manager.manager.VideoItem;
+import com.volokh.danylo.video_player_manager.ui.MediaPlayerWrapper;
+import com.volokh.danylo.video_player_manager.utils.Logger;
+import com.volokh.danylo.video_player_manager.visibility_utils.CurrentItemMetaData;
 import com.volokh.danylo.videolist.R;
 import com.volokh.danylo.videolist.adapter.holders.VideoViewHolder;
-import com.volokh.danylo.videolist.adapter.visibilityutils.CurrentItemMetaData;
-import com.volokh.danylo.videolist.player.manager.VideoPlayerManager;
-import com.volokh.danylo.videolist.ui.MediaPlayerWrapper;
-import com.volokh.danylo.videolist.ui.VideoPlayerView;
-import com.volokh.danylo.videolist.utils.Logger;
+import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
 
 public abstract class BaseVideoItem implements VideoItem {
 
     private static final boolean SHOW_LOGS = false;
     private static final String TAG = BaseVideoItem.class.getSimpleName();
 
-    /**An object that is filled with values when {@link #getVisibilityPercents} method is called.
-     * This object is local visible rect filled by {@link android.view.View#getLocalVisibleRect}*/
+    /**
+     * An object that is filled with values when {@link #getVisibilityPercents} method is called.
+     * This object is local visible rect filled by {@link android.view.View#getLocalVisibleRect}
+     */
 
     private final Rect mCurrentViewRect = new Rect();
     private final VideoPlayerManager mVideoPlayerManager;
@@ -28,21 +31,31 @@ public abstract class BaseVideoItem implements VideoItem {
         mVideoPlayerManager = videoPlayerManager;
     }
 
-    protected abstract void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<CurrentItemMetaData> videoPlayerManager, View view);
-    protected abstract void stopPlayback(VideoPlayerManager videoPlayerManager);
+    /**
+     * This method needs to be called when created/recycled view is updated.
+     * Call it in
+     * 1. {@link android.widget.ListAdapter#getView(int, View, ViewGroup)}
+     * 2. {@link android.support.v7.widget.RecyclerView.Adapter#onBindViewHolder(RecyclerView.ViewHolder, int)}
+     */
+    public abstract void update(int position, VideoViewHolder view, VideoPlayerManager videoPlayerManager);
 
+    /**
+     * When this item becomes active we start playback on the video in this item
+     */
     @Override
     public void setActive(View view, int position) {
         VideoViewHolder viewHolder = (VideoViewHolder) view.getTag();
         playNewVideo(new CurrentItemMetaData(position), viewHolder.mPlayer, mVideoPlayerManager, view);
     }
 
+    /**
+     * When this item becomes inactive we stop playback on the video in this item.
+     */
     @Override
     public void deactivate(View currentView, int position) {
         stopPlayback(mVideoPlayerManager);
     }
 
-    @Override
     public View createView(ViewGroup parent, int screenWidth) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.video_item, parent, false);
         ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
@@ -58,6 +71,7 @@ public abstract class BaseVideoItem implements VideoItem {
 
             @Override
             public void onVideoPreparedMainThread() {
+                // When video is prepared it's about to start playback. So we hide the cover
                 videoViewHolder.mCover.setVisibility(View.INVISIBLE);
             }
 
@@ -75,6 +89,7 @@ public abstract class BaseVideoItem implements VideoItem {
 
             @Override
             public void onVideoStoppedMainThread() {
+                // Show the cover when video stopped
                 videoViewHolder.mCover.setVisibility(View.VISIBLE);
             }
         });
@@ -117,8 +132,7 @@ public abstract class BaseVideoItem implements VideoItem {
         VideoViewHolder videoViewHolder = (VideoViewHolder) currentView.getTag();
         String percentsText = "Visibility percents: " + String.valueOf(percents);
 
-        videoViewHolder.mVisibilityPercentsBottom.setText(percentsText);
-        videoViewHolder.mVisibilityPercentsTop.setText(percentsText);
+        videoViewHolder.mVisibilityPercents.setText(percentsText);
     }
 
     private boolean viewIsPartiallyHiddenBottom(int height) {

@@ -6,8 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.volokh.danylo.videolist.adapter.holders.VideoViewHolder;
-import com.volokh.danylo.videolist.adapter.items.VideoItem;
-import com.volokh.danylo.videolist.player.manager.VideoPlayerManager;
+import com.volokh.danylo.videolist.adapter.items.BaseVideoItem;
+import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
 
 import java.util.List;
 
@@ -17,10 +17,10 @@ import java.util.List;
 public class VideoRecyclerViewAdapter extends RecyclerView.Adapter<VideoViewHolder> {
 
     private final VideoPlayerManager mVideoPlayerManager;
-    private final List<VideoItem> mList;
+    private final List<BaseVideoItem> mList;
     private final Context mContext;
 
-    public VideoRecyclerViewAdapter(VideoPlayerManager videoPlayerManager, Context context, List<VideoItem> list){
+    public VideoRecyclerViewAdapter(VideoPlayerManager videoPlayerManager, Context context, List<BaseVideoItem> list){
         mVideoPlayerManager = videoPlayerManager;
         mContext = context;
         mList = list;
@@ -28,14 +28,14 @@ public class VideoRecyclerViewAdapter extends RecyclerView.Adapter<VideoViewHold
 
     @Override
     public VideoViewHolder onCreateViewHolder(ViewGroup viewGroup, int position) {
-        VideoItem videoItem = mList.get(position);
+        BaseVideoItem videoItem = mList.get(position);
         View resultView = videoItem.createView(viewGroup, mContext.getResources().getDisplayMetrics().widthPixels);
         return new VideoViewHolder(resultView);
     }
 
     @Override
     public void onBindViewHolder(VideoViewHolder viewHolder, int position) {
-        VideoItem videoItem = mList.get(position);
+        BaseVideoItem videoItem = mList.get(position);
         videoItem.update(position, viewHolder, mVideoPlayerManager);
     }
 

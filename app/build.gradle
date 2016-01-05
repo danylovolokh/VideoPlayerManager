@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 21
+    compileSdkVersion 23
     buildToolsVersion "21.1.2"
 
     packagingOptions { //specify exclude because these files are duplicated in different libraries
@@ -11,7 +11,6 @@ android {
 
     defaultConfig {
         applicationId "com.volokh.danylo.videolist"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         minSdkVersion Integer.parseInt(project.BUILD_MIN_SDK_VERSION)
         targetSdkVersion Integer.parseInt(project.ANDROID_BUILD_TARGET_SDK_VERSION)
@@ -29,16 +28,12 @@ android {
 
 dependencies {
 
-    // use JUnit 4 rules
-    androidTestCompile 'com.android.support.test:rules:0.2'
-    // Testing-only dependencies
-    androidTestCompile 'com.android.support.test:runner:0.2'
-    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.1'
-
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:21.0.3'
-    compile 'com.android.support:cardview-v7:21.0.3'
-    compile 'com.android.support:recyclerview-v7:21.0.3'
-    compile 'com.android.support:design:22.2.1'
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.android.support:cardview-v7:23.0.1'
+    compile 'com.android.support:recyclerview-v7:23.0.1'
+    compile 'com.android.support:design:23.0.1'
     compile 'com.squareup.picasso:picasso:2.5.2'
+
+    compile project(':video-player-manager')
 }
