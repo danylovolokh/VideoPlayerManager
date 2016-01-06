@@ -20,6 +20,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * This class encapsulates {@link MediaPlayer}
+ * and follows this use-case diagram:
+ *
+ * http://developer.android.com/reference/android/media/MediaPlayer.html
+ */
 public abstract class MediaPlayerWrapper
         implements MediaPlayer.OnErrorListener,
         MediaPlayer.OnBufferingUpdateListener,

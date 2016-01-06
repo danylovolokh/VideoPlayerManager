@@ -6,6 +6,9 @@ import com.volokh.danylo.video_player_manager.manager.VideoPlayerManagerCallback
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
 import com.volokh.danylo.video_player_manager.utils.Logger;
 
+/**
+ * This is generic interface for PlayerMessage
+ */
 public abstract class PlayerMessage implements Message {
 
     private static final String TAG = PlayerMessage.class.getSimpleName();

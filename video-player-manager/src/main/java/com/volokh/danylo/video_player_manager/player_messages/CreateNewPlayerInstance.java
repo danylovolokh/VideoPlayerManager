@@ -4,6 +4,9 @@ import com.volokh.danylo.video_player_manager.PlayerMessageState;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManagerCallback;
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
 
+/**
+ * This PlayerMessage creates new MediaPlayer instance that will be used inside {@link VideoPlayerView}
+ */
 public class CreateNewPlayerInstance extends PlayerMessage {
 
     public CreateNewPlayerInstance(VideoPlayerView videoPlayerView, VideoPlayerManagerCallback callback) {

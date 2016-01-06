@@ -25,6 +25,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * This is player implementation based on {@link TextureView}
+ * It encapsulates {@link MediaPlayer}.
+ *
+ * It ensures that MediaPlayer methods are called from not main thread.
+ * MediaPlayer methods are directly connected with hardware. That's why they should not be called from UI thread
+ *
  * @author danylo.volokh
  */
 public class VideoPlayerView extends ScalableTextureView

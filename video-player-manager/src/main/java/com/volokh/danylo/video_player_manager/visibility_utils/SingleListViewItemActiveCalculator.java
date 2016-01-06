@@ -10,16 +10,15 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- *
  * A utility that tracks current {@link com.volokh.danylo.video_player_manager.visibility_utils.ListItem} visibility.
- * Current ListItem is an item defined from outside by calling {@link com.volokh.danylo.videolist.adapter.interfaces.SetViewCallback#setCurrentItem(CurrentItemMetaData, android.view.View, android.view.View)}.
+ * Current ListItem is an item defined from outside by calling {@link com.volokh.danylo.video_player_manager.manager.SetViewCallback#setCurrentItem(CurrentItemMetaData, android.view.View)}.
  * Or it might be mock current item created in method {@link #getMockCurrentItem}
  *
  * The logic is following: when current view is going out of screen (up or down) by {@link #INACTIVE_LIST_ITEM_VISIBILITY_PERCENTS} or more then neighbour item become "active" by calling {@link Callback#onActivateNewCurrentItem}
  * "Going out of screen" is calculated when {@link #onStateTouchScroll} is called from super class {@link BaseItemsVisibilityCalculator}
  *
  * Method {@link ListItemsVisibilityCalculator#onScrollStateIdle} should be called only when scroll state become idle. // TODO: test it
- * When it's called we look for new current item that eventually will be set as "active" by calling {@link com.volokh.danylo.videolist.adapter.interfaces.SetViewCallback#setCurrentItem}
+ * When it's called we look for new current item that eventually will be set as "active" by calling {@link com.volokh.danylo.video_player_manager.manager.SetViewCallback#setCurrentItem}
  * Regarding the {@link #mScrollDirection} new current item is calculated from top to bottom (if DOWN) or from bottom to top (if UP).
  * The first(or last) visible item is set to current. It's visibility percentage is calculated. Then we are going though all visible items and find the one that is the most visible.
  *

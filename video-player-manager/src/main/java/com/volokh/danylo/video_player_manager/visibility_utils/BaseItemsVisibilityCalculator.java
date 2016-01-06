@@ -6,7 +6,11 @@ import com.volokh.danylo.video_player_manager.Config;
 import com.volokh.danylo.video_player_manager.utils.Logger;
 import com.volokh.danylo.video_player_manager.utils.ScrollDirectionDetector;
 
-
+/**
+ * This class encapsulates some basic logic of Visibility calculator.
+ * In onScroll event it calculates Scroll direction using {@link ScrollDirectionDetector}
+ * and then calls appropriate methods
+ */
 public abstract class BaseItemsVisibilityCalculator implements ListItemsVisibilityCalculator, ScrollDirectionDetector.OnDetectScrollListener{
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;

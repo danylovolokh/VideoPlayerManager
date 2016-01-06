@@ -1,11 +1,15 @@
 package com.volokh.danylo.video_player_manager.player_messages;
 
+import android.media.MediaPlayer;
+
 import com.volokh.danylo.video_player_manager.Config;
 import com.volokh.danylo.video_player_manager.PlayerMessageState;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManagerCallback;
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
 import com.volokh.danylo.video_player_manager.utils.Logger;
-
+/**
+ * This PlayerMessage calls {@link MediaPlayer#start()} on the instance that is used inside {@link VideoPlayerView}
+ */
 public class Start extends PlayerMessage{
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;

@@ -4,6 +4,9 @@ import com.volokh.danylo.video_player_manager.PlayerMessageState;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManagerCallback;
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
 
+/**
+ * This PlayerMessage clears MediaPlayer instance that was used inside {@link VideoPlayerView}
+ */
 public class ClearPlayerInstance extends PlayerMessage {
 
     public ClearPlayerInstance(VideoPlayerView videoPlayerView, VideoPlayerManagerCallback callback) {

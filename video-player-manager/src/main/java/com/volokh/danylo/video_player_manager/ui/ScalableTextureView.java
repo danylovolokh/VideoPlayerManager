@@ -8,6 +8,9 @@ import android.view.TextureView;
 import com.volokh.danylo.video_player_manager.Config;
 import com.volokh.danylo.video_player_manager.utils.Logger;
 
+/**
+ * This extension of {@link TextureView} is created to isolate scaling of this view.
+ */
 public abstract class ScalableTextureView extends TextureView{
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
