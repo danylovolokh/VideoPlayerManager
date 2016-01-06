@@ -3,8 +3,8 @@ package com.volokh.danylo.video_player_manager.manager;
 import android.view.View;
 
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
-import com.volokh.danylo.video_player_manager.visibility_utils.CurrentItemMetaData;
-import com.volokh.danylo.video_player_manager.visibility_utils.ListItem;
+import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
+import com.volokh.danylo.visibility_utils.items.ListItem;
 
 /**
  * This is basic interface for Items in Adapter of the list. Regardless of is it {@link android.widget.ListView}

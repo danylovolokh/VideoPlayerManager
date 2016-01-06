@@ -1,7 +1,7 @@
 package com.danylo.volokh.video_player_manager.player;
 
 import com.volokh.danylo.video_player_manager.Config;
-import com.volokh.danylo.video_player_manager.PlayerHandlerThread;
+import com.volokh.danylo.video_player_manager.MessagesHandlerThread;
 import com.volokh.danylo.video_player_manager.player_messages.Message;
 import com.volokh.danylo.video_player_manager.utils.Logger;
 
@@ -23,7 +23,7 @@ public class PlayerHandlerThreadTest {
 
     private final Object mSync = new Object();
 
-    private PlayerHandlerThread mPlayerHandler;
+    private MessagesHandlerThread mPlayerHandler;
 
     private int mMessagesProcessed;
     private int mMessagesPolledFromQueue;
@@ -31,7 +31,7 @@ public class PlayerHandlerThreadTest {
 
     @Before
     public void setUp() throws Exception {
-        mPlayerHandler = new PlayerHandlerThread();
+        mPlayerHandler = new MessagesHandlerThread();
         mMessagesProcessed = 0;
         mMessagesPolledFromQueue = 0;
         mMessagesProcessed = 0;

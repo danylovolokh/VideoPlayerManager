@@ -4,10 +4,11 @@ import android.content.res.AssetFileDescriptor;
 import android.view.View;
 
 import com.volokh.danylo.video_player_manager.Config;
+import com.volokh.danylo.video_player_manager.meta.MetaData;
 import com.volokh.danylo.video_player_manager.player_messages.ClearPlayerInstance;
 import com.volokh.danylo.video_player_manager.player_messages.CreateNewPlayerInstance;
 import com.volokh.danylo.video_player_manager.player_messages.SetAssetsDataSourceMessage;
-import com.volokh.danylo.video_player_manager.PlayerHandlerThread;
+import com.volokh.danylo.video_player_manager.MessagesHandlerThread;
 import com.volokh.danylo.video_player_manager.PlayerMessageState;
 import com.volokh.danylo.video_player_manager.player_messages.Prepare;
 import com.volokh.danylo.video_player_manager.player_messages.Release;
@@ -19,7 +20,7 @@ import com.volokh.danylo.video_player_manager.player_messages.Stop;
 import com.volokh.danylo.video_player_manager.ui.MediaPlayerWrapper;
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
 import com.volokh.danylo.video_player_manager.utils.Logger;
-import com.volokh.danylo.video_player_manager.visibility_utils.CurrentItemMetaData;
+import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
 
 import java.util.Arrays;
 
@@ -36,21 +37,21 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
     /**
      * This is a handler thread that is used to process Player messages.
      */
-    private final PlayerHandlerThread mPlayerHandler = new PlayerHandlerThread();
+    private final MessagesHandlerThread mPlayerHandler = new MessagesHandlerThread();
 
     /**
      * When {@link SingleVideoPlayerManager} actually switches the player
      * (Switching the player can take a while: we have to stop previous player then start another),
-     * then it calls {@link SetViewCallback#setCurrentItem(CurrentItemMetaData, View)}
+     * then it calls {@link PlayerItemChangeListener#onPlayerItemChanged(MetaData, View)}}
      * To notify that player was switched.
      */
-    private final SetViewCallback mSetVideoPlayerCallback;
+    private final PlayerItemChangeListener<CurrentItemMetaData> mPlayerItemChangeListener;
 
     private VideoPlayerView mCurrentPlayer = null;
     private PlayerMessageState mCurrentPlayerState = PlayerMessageState.IDLE;
 
-    public SingleVideoPlayerManager(SetViewCallback setVideoPlayerCallback) {
-        mSetVideoPlayerCallback = setVideoPlayerCallback;
+    public SingleVideoPlayerManager(PlayerItemChangeListener<CurrentItemMetaData> playerItemChangeListener) {
+        mPlayerItemChangeListener = playerItemChangeListener;
     }
 
     /**
@@ -245,7 +246,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
     }
 
     /**
-     * This method posts a set of messages to {@link PlayerHandlerThread} in order
+     * This method posts a set of messages to {@link MessagesHandlerThread} in order
      * to start new playback
      *
      * @param videoPlayerView - video player view which should start playing
@@ -274,7 +275,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
     }
 
     /**
-     * This method posts a message that will eventually call {@link SetViewCallback#setCurrentItem(CurrentItemMetaData, View)}
+     * This method posts a message that will eventually call {@link PlayerItemChangeListener#onPlayerItemChanged(MetaData, View)}
      * When current player is stopped and new player is about to be active this message sets new player
      */
     private void setNewViewForPlayback(CurrentItemMetaData currentItemMetaData, VideoPlayerView videoPlayerView, View listItemView) {
@@ -283,7 +284,7 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
     }
 
     /**
-     * This method posts a set of messages to {@link PlayerHandlerThread}
+     * This method posts a set of messages to {@link MessagesHandlerThread}
      * in order to stop current playback
      */
     private void stopResetReleaseClearCurrentPlayer() {
@@ -384,12 +385,12 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<CurrentItemM
      */
     @Override
     public void setCurrentItem(CurrentItemMetaData currentItemMetaData, VideoPlayerView videoPlayerView, View listItemView) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> setCurrentItem");
+        if(SHOW_LOGS) Logger.v(TAG, ">> onPlayerItemChanged");
 
         mCurrentPlayer = videoPlayerView;
-        mSetVideoPlayerCallback.setCurrentItem(currentItemMetaData, listItemView);
+        mPlayerItemChangeListener.onPlayerItemChanged(currentItemMetaData, listItemView);
 
-        if(SHOW_LOGS) Logger.v(TAG, "<< setCurrentItem");
+        if(SHOW_LOGS) Logger.v(TAG, "<< onPlayerItemChanged");
     }
 
     /**

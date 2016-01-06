@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="15dp"
-    tools:context=".activities.VideoListActivity$PlaceholderFragment">
+    tools:context=".video_list_demo.activity.VideoListActivity$PlaceholderFragment">
 
     <ListView
         android:id="@+id/list_view"

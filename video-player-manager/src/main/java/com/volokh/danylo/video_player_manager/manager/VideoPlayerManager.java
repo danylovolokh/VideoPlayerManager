@@ -4,7 +4,7 @@ import android.content.res.AssetFileDescriptor;
 import android.view.View;
 
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
-import com.volokh.danylo.video_player_manager.visibility_utils.MetaData;
+import com.volokh.danylo.video_player_manager.meta.MetaData;
 
 /**
  * This is a general interface for VideoPlayerManager
