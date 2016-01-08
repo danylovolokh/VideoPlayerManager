@@ -18,9 +18,23 @@ public class VisibilityItem implements ListItem {
 
     private final String mTitle;
     private final Rect mCurrentViewRect = new Rect();
+    private final ItemCallback mItemCallback;
 
-    public VisibilityItem(String title) {
-        this.mTitle = title;
+    public void onBindViewHolder(Holder holder, int position) {
+        int color = holder.itemView.getResources().getColor(android.R.color.holo_blue_dark);
+        holder.positionView.setText("Position " + position);
+        holder.itemView.setBackgroundColor(color);
+    }
+
+
+    public interface ItemCallback {
+        void makeToast(String text);
+        void onActiveViewChangedActive(View newActiveView, int newActiveViewPosition);
+    }
+
+    public VisibilityItem(String title, ItemCallback callback) {
+        mTitle = title;
+        mItemCallback = callback;
     }
 
     @Override
@@ -49,9 +63,27 @@ public class VisibilityItem implements ListItem {
 
     @Override
     public void setActive(View newActiveView, int newActiveViewPosition) {
-        View newColoredView = newActiveView.findViewById(R.id.colored_view);
-        int newColor = newActiveView.getResources().getColor(android.R.color.holo_green_dark);
-        newColoredView.setBackgroundColor(newColor);
+        if(SHOW_LOGS) Logger.v(TAG, "setActive, newActiveViewPosition " + newActiveViewPosition);
+
+        final View whiteView = newActiveView.findViewById(R.id.white_view);
+        // animate alpha to show that active view has changed
+        whiteView
+                .animate()
+                .alpha(1f)
+                .setDuration(500)
+                .withEndAction(new Runnable() {
+            @Override
+            public void run() {
+                // animate alpha back
+                whiteView
+                        .animate()
+                        .alpha(0f)
+                        .setDuration(500)
+                        .start();
+            }
+        }).start();
+        mItemCallback.makeToast("New Active View at position " + newActiveViewPosition);
+        mItemCallback.onActiveViewChangedActive(newActiveView, newActiveViewPosition);
     }
 
 
@@ -66,9 +98,6 @@ public class VisibilityItem implements ListItem {
 
     @Override
     public void deactivate(View currentView, int position) {
-        View coloredView = currentView.findViewById(R.id.colored_view);
-
-        int color = currentView.getResources().getColor(android.R.color.holo_blue_dark);
-        coloredView.setBackgroundColor(color);
+        mItemCallback.makeToast("Deactivate View");
     }
 }

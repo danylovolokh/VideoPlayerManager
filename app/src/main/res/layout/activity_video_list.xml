@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".video_list_demo.activity.VideoListActivity"
+    tools:context=".demo.VideoListActivity"
     android:orientation="vertical">
 
     <android.support.v7.widget.Toolbar

@@ -1,76 +1,57 @@
-package com.volokh.danylo.videolist.video_list_demo.activity;
+package com.volokh.danylo.videolist.video_list_demo.fragments;
 
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.ListView;
 
 import com.volokh.danylo.video_player_manager.Config;
 import com.volokh.danylo.video_player_manager.manager.PlayerItemChangeListener;
 import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
-import com.volokh.danylo.video_player_manager.manager.SingleVideoPlayerManager;
-import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
 import com.volokh.danylo.videolist.R;
-import com.volokh.danylo.videolist.video_list_demo.adapter.VideoListViewAdapter;
+import com.volokh.danylo.videolist.video_list_demo.adapter.VideoRecyclerViewAdapter;
 import com.volokh.danylo.videolist.video_list_demo.adapter.items.BaseVideoItem;
 import com.volokh.danylo.videolist.video_list_demo.adapter.items.ItemFactory;
+import com.volokh.danylo.video_player_manager.manager.SingleVideoPlayerManager;
+import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
 import com.volokh.danylo.visibility_utils.calculator.DefaultSingleItemCalculatorCallback;
 import com.volokh.danylo.visibility_utils.calculator.ListItemsVisibilityCalculator;
 import com.volokh.danylo.visibility_utils.calculator.SingleListViewItemActiveCalculator;
 import com.volokh.danylo.visibility_utils.scroll_utils.ItemsPositionGetter;
+import com.volokh.danylo.visibility_utils.scroll_utils.RecyclerViewItemPositionGetter;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * This fragment shows of how to use {@link VideoPlayerManager} with a ListView.
+ * This fragment shows of how to use {@link VideoPlayerManager} with a RecyclerView.
  */
-public class VideoListFragment extends Fragment {
+public class VideoRecyclerViewFragment extends Fragment {
 
     private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
-    private static final String TAG = VideoListFragment.class.getSimpleName();
+    private static final String TAG = VideoRecyclerViewFragment.class.getSimpleName();
 
     private final ArrayList<BaseVideoItem> mList = new ArrayList<>();
+
     /**
      * Only the one (most visible) view should be active (and playing).
      * To calculate visibility of views we use {@link SingleListViewItemActiveCalculator}
      */
-    private final ListItemsVisibilityCalculator mListItemVisibilityCalculator =
+    private final ListItemsVisibilityCalculator mVideoVisibilityCalculator =
             new SingleListViewItemActiveCalculator(new DefaultSingleItemCalculatorCallback(), mList);
+
+    private RecyclerView mRecyclerView;
+    private LinearLayoutManager mLayoutManager;
 
     /**
      * ItemsPositionGetter is used by {@link ListItemsVisibilityCalculator} for getting information about
-     * items position in the ListView
+     * items position in the RecyclerView and LayoutManager
      */
-    private final ItemsPositionGetter mItemsPositionGetter = new ItemsPositionGetter() {
-        @Override
-        public View getChildAt(int position) {
-            return mListView.getChildAt(position);
-        }
-
-        @Override
-        public int indexOfChild(View view) {
-            return mListView.indexOfChild(view);
-        }
-
-        @Override
-        public int getChildCount() {
-            return mListView.getChildCount();
-        }
-
-        @Override
-        public int getLastVisiblePosition() {
-            return mListView.getLastVisiblePosition();
-        }
-
-        @Override
-        public int getFirstVisiblePosition() {
-            return mListView.getFirstVisiblePosition();
-        }
-    };
+    private ItemsPositionGetter mItemsPositionGetter;
 
     /**
      * Here we use {@link SingleVideoPlayerManager}, which means that only one video playback is possible.
@@ -78,20 +59,16 @@ public class VideoListFragment extends Fragment {
     private final VideoPlayerManager mVideoPlayerManager = new SingleVideoPlayerManager(new PlayerItemChangeListener<CurrentItemMetaData>() {
         @Override
         public void onPlayerItemChanged(CurrentItemMetaData metaData, View playerItem) {
-            mListItemVisibilityCalculator.setCurrentItem(metaData.positionOfCurrentItem, playerItem);
+            mVideoVisibilityCalculator.setCurrentItem(metaData.positionOfCurrentItem, playerItem);
         }
     });
 
     private int mScrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
 
-    private ListView mListView;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        // if your files are in "assets" directory you can pass AssetFileDescriptor to the VideoPlayerView
-        // if they are url's or path values you can pass the String path to the VideoPlayerView
         try {
             mList.add(ItemFactory.createItemFromAsset("Batman vs Dracula.mp4", R.drawable.rocket_science1, getActivity(), mVideoPlayerManager));
             mList.add(ItemFactory.createItemFromAsset("DZIDZIO.mp4", R.drawable.rocket_science2, getActivity(), mVideoPlayerManager));
@@ -116,30 +93,48 @@ public class VideoListFragment extends Fragment {
             throw new RuntimeException(e);
         }
 
-        View rootView = inflater.inflate(R.layout.fragment_video_list_view, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_video_recycler_view, container, false);
 
-        mListView = (ListView) rootView.findViewById(R.id.list_view);
-        VideoListViewAdapter mVideoListViewAdapter = new VideoListViewAdapter(mVideoPlayerManager, getActivity(), mList);
-        mListView.setAdapter(mVideoListViewAdapter);
-        mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        mRecyclerView.setHasFixedSize(true);
+
+        // use a linear layout manager
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        VideoRecyclerViewAdapter videoRecyclerViewAdapter = new VideoRecyclerViewAdapter(mVideoPlayerManager, getActivity(), mList);
+
+        mRecyclerView.setAdapter(videoRecyclerViewAdapter);
+        mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+
             @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
+            public void onScrollStateChanged(RecyclerView recyclerView, int scrollState) {
                 mScrollState = scrollState;
-                if(scrollState == SCROLL_STATE_IDLE && !mList.isEmpty()){
-                    mListItemVisibilityCalculator.onScrollStateIdle(mItemsPositionGetter, view.getFirstVisiblePosition(), view.getLastVisiblePosition());
+                if(scrollState == RecyclerView.SCROLL_STATE_IDLE && !mList.isEmpty()){
+
+                    mVideoVisibilityCalculator.onScrollStateIdle(
+                            mItemsPositionGetter,
+                            mLayoutManager.findFirstVisibleItemPosition(),
+                            mLayoutManager.findLastVisibleItemPosition());
                 }
             }
 
             @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 if(!mList.isEmpty()){
-                    // on each scroll event we need to call onScroll for mListItemVisibilityCalculator
-                    // in order to recalculate the items visibility
-                    mListItemVisibilityCalculator.onScroll(mItemsPositionGetter, firstVisibleItem, visibleItemCount, mScrollState);
+                    mVideoVisibilityCalculator.onScroll(
+                            mItemsPositionGetter,
+                            mLayoutManager.findFirstVisibleItemPosition(),
+                            mLayoutManager.findLastVisibleItemPosition() - mLayoutManager.findFirstVisibleItemPosition() + 1,
+                            mScrollState);
                 }
             }
         });
-        mVideoListViewAdapter.notifyDataSetChanged();
+        mItemsPositionGetter = new RecyclerViewItemPositionGetter(mLayoutManager, mRecyclerView);
+
+        videoRecyclerViewAdapter.notifyDataSetChanged();
 
         return rootView;
     }
@@ -148,16 +143,16 @@ public class VideoListFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if(!mList.isEmpty()){
-            // need to call this method from list view handler in order to have list filled previously
+            // need to call this method from list view handler in order to have filled list
 
-            mListView.post(new Runnable() {
+            mRecyclerView.post(new Runnable() {
                 @Override
                 public void run() {
 
-                    mListItemVisibilityCalculator.onScrollStateIdle(
+                    mVideoVisibilityCalculator.onScrollStateIdle(
                             mItemsPositionGetter,
-                            mListView.getFirstVisiblePosition(),
-                            mListView.getLastVisiblePosition());
+                            mLayoutManager.findFirstVisibleItemPosition(),
+                            mLayoutManager.findLastVisibleItemPosition());
 
                 }
             });

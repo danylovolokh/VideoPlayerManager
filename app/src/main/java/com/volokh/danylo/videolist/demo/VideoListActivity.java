@@ -1,4 +1,4 @@
-package com.volokh.danylo.videolist.video_list_demo.activity;
+package com.volokh.danylo.videolist.demo;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -7,13 +7,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.volokh.danylo.videolist.R;
+import com.volokh.danylo.videolist.video_list_demo.fragments.VideoListFragment;
+import com.volokh.danylo.videolist.video_list_demo.fragments.VideoRecyclerViewFragment;
+import com.volokh.danylo.videolist.visibility_demo.fragments.VisibilityUtilsFragment;
 
 /**
  * This activity contains a fragment and gives the switch option between two fragments.
  * 1. {@link VideoRecyclerViewFragment}
  * 2. {@link VideoListFragment}
  */
-public class VideoListActivity extends ActionBarActivity {
+public class VideoListActivity extends ActionBarActivity implements VisibilityUtilsFragment.VisibilityUtilsCallback {
 
     private Toolbar mToolbar;
 
@@ -54,10 +57,22 @@ public class VideoListActivity extends ActionBarActivity {
                     addRecyclerView();
                 }
                 break;
+            case R.id.enable_visibility_utils_demo:
+                if(!item.isChecked()){
+                    addVisibilityUtilsFragment();
+                }
+                break;
         }
         item.setChecked(!item.isChecked());
 
         return true;
+    }
+
+    private void addVisibilityUtilsFragment() {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, new VisibilityUtilsFragment())
+                .commit();
+        mToolbar.setTitle("Visibility Utils Demo");
     }
 
     private void addRecyclerView() {
@@ -72,5 +87,10 @@ public class VideoListActivity extends ActionBarActivity {
                 .replace(R.id.fragment_container, new VideoListFragment())
                 .commit();
         mToolbar.setTitle("List View");
+    }
+
+    @Override
+    public void setTitle(String title) {
+        mToolbar.setTitle(title);
     }
 }

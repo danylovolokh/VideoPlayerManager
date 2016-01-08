@@ -1,10 +1,15 @@
-package com.volokh.danylo.videolist.visibility_demo.activity;
+package com.volokh.danylo.videolist.visibility_demo.fragments;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.volokh.danylo.videolist.R;
 import com.volokh.danylo.videolist.visibility_demo.adapter.VisibilityUtilsAdapter;
@@ -12,6 +17,7 @@ import com.volokh.danylo.videolist.visibility_demo.adapter.items.VisibilityItem;
 import com.volokh.danylo.visibility_utils.calculator.DefaultSingleItemCalculatorCallback;
 import com.volokh.danylo.visibility_utils.calculator.ListItemsVisibilityCalculator;
 import com.volokh.danylo.visibility_utils.calculator.SingleListViewItemActiveCalculator;
+import com.volokh.danylo.visibility_utils.items.ListItem;
 import com.volokh.danylo.visibility_utils.scroll_utils.ItemsPositionGetter;
 import com.volokh.danylo.visibility_utils.scroll_utils.RecyclerViewItemPositionGetter;
 
@@ -20,44 +26,69 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by danylo.volokh on 06.01.2016.
+ * Created by danylo.volokh on 08.01.2016.
  */
-public class VisibilityUtilsActivity extends Activity {
+public class VisibilityUtilsFragment extends Fragment implements VisibilityItem.ItemCallback {
+
+    public interface VisibilityUtilsCallback{
+        void setTitle(String title);
+    }
 
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
+    private VisibilityUtilsCallback mVisibilityUtilsCallback;
 
     private List<VisibilityItem> mList = new ArrayList<>(Arrays.asList(
-        new VisibilityItem("1"),
-        new VisibilityItem("2"),
-        new VisibilityItem("3"),
-        new VisibilityItem("4"),
-        new VisibilityItem("5"),
-        new VisibilityItem("6"),
-        new VisibilityItem("7"),
-        new VisibilityItem("8"),
-        new VisibilityItem("9"),
-        new VisibilityItem("10")));
+            new VisibilityItem("1", this),
+            new VisibilityItem("2", this),
+            new VisibilityItem("3", this),
+            new VisibilityItem("4", this),
+            new VisibilityItem("5", this),
+            new VisibilityItem("6", this),
+            new VisibilityItem("7", this),
+            new VisibilityItem("8", this),
+            new VisibilityItem("9", this),
+            new VisibilityItem("10", this)));
 
     private final ListItemsVisibilityCalculator mListItemVisibilityCalculator =
-            new SingleListViewItemActiveCalculator(new DefaultSingleItemCalculatorCallback(), mList);
+            new SingleListViewItemActiveCalculator(new DefaultSingleItemCalculatorCallback(){
+
+                @Override
+                public void onActivateNewCurrentItem(ListItem newListItem, View newView, int newViewPosition) {
+                    super.onActivateNewCurrentItem(newListItem, newView, newViewPosition);
+                    mListItemVisibilityCalculator.setCurrentItem(newViewPosition, newView);
+
+                }
+            }, mList);
 
     private ItemsPositionGetter mItemsPositionGetter;
 
     private int mScrollState;
+    private Toast mToast;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.visibility_utils_activity);
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        mVisibilityUtilsCallback = (VisibilityUtilsCallback)activity;
+    }
 
-        mRecyclerView = (RecyclerView)findViewById(R.id.visibility_demo_recycler_view);
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mVisibilityUtilsCallback = null;
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.visibility_utils_activity, container, false);
+
+        mRecyclerView = (RecyclerView)root.findViewById(R.id.visibility_demo_recycler_view);
+
         mRecyclerView.setHasFixedSize(true);
 
         // use a linear layout manager
-        mLayoutManager = new LinearLayoutManager(this);
+        mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         VisibilityUtilsAdapter adapter = new VisibilityUtilsAdapter(mList);
@@ -93,6 +124,7 @@ public class VisibilityUtilsActivity extends Activity {
 
 
         mItemsPositionGetter = new RecyclerViewItemPositionGetter(mLayoutManager, mRecyclerView);
+        return root;
     }
 
     @Override
@@ -104,8 +136,6 @@ public class VisibilityUtilsActivity extends Activity {
             mRecyclerView.post(new Runnable() {
                 @Override
                 public void run() {
-                    View firstView = mLayoutManager.findViewByPosition(0);
-                    mListItemVisibilityCalculator.setCurrentItem(0, firstView);
 
                     mListItemVisibilityCalculator.onScrollStateIdle(
                             mItemsPositionGetter,
@@ -115,5 +145,19 @@ public class VisibilityUtilsActivity extends Activity {
                 }
             });
         }
+    }
+
+    @Override
+    public void makeToast(String text) {
+        if(mToast != null){
+            mToast.cancel();
+            mToast = Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT);
+            mToast.show();
+        }
+    }
+
+    @Override
+    public void onActiveViewChangedActive(View newActiveView, int newActiveViewPosition) {
+        mVisibilityUtilsCallback.setTitle("Active view at position " + newActiveViewPosition);
     }
 }

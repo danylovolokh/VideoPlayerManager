@@ -6,7 +6,6 @@ import android.view.View;
 import com.volokh.danylo.visibility_utils.utils.Config;
 import com.volokh.danylo.visibility_utils.utils.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -16,6 +15,8 @@ public class ListItemData {
 
     private Integer mIndexInAdapter;
     private View mView;
+
+    private boolean mIsMostVisibleItemChanged;
 
     public int getIndex() {
         return mIndexInAdapter;
@@ -41,5 +42,13 @@ public class ListItemData {
         int visibilityPercents = listItems.get(getIndex()).getVisibilityPercents(getView());
         if(SHOW_LOGS) Logger.v(TAG, "getVisibilityPercents, visibilityPercents " + visibilityPercents);
         return visibilityPercents;
+    }
+
+    public void setMostVisibleItemChanged(boolean isDataChanged) {
+        mIsMostVisibleItemChanged = isDataChanged;
+    }
+
+    public boolean isMostVisibleItemChanged() {
+        return mIsMostVisibleItemChanged;
     }
 }

@@ -9,5 +9,8 @@
         <item android:id="@+id/enable_recycler_view"
             android:title="Enable RecyclerView" />
 
+        <item android:id="@+id/enable_visibility_utils_demo"
+            android:title="Enable Visibility Utils Demo" />
+
     </group>
 </menu>
