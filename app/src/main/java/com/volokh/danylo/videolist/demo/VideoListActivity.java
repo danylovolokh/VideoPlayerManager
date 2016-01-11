@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import com.volokh.danylo.videolist.R;
 import com.volokh.danylo.videolist.video_list_demo.fragments.VideoListFragment;
 import com.volokh.danylo.videolist.video_list_demo.fragments.VideoRecyclerViewFragment;
+import com.volokh.danylo.videolist.video_player_manager_demo.fragments.VideoPlayerManagerFragment;
 import com.volokh.danylo.videolist.visibility_demo.fragments.VisibilityUtilsFragment;
 
 /**
@@ -62,10 +63,22 @@ public class VideoListActivity extends ActionBarActivity implements VisibilityUt
                     addVisibilityUtilsFragment();
                 }
                 break;
+            case R.id.enable_video_player_manager_demo:
+                if(!item.isChecked()){
+                    addVideoPlayerManagerFragment();
+                }
+                break;
         }
         item.setChecked(!item.isChecked());
 
         return true;
+    }
+
+    private void addVideoPlayerManagerFragment() {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, new VideoPlayerManagerFragment())
+                .commit();
+        mToolbar.setTitle("Press on photo to start playback");
     }
 
     private void addVisibilityUtilsFragment() {

@@ -1,10 +1,8 @@
 package com.volokh.danylo.video_player_manager.manager;
 
-import android.view.View;
-
 import com.volokh.danylo.video_player_manager.PlayerMessageState;
+import com.volokh.danylo.video_player_manager.meta.MetaData;
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
-import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
 
 /**
  * This callback is used by {@link com.volokh.danylo.video_player_manager.player_messages.PlayerMessage}
@@ -12,7 +10,7 @@ import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
  */
 public interface VideoPlayerManagerCallback {
 
-    void setCurrentItem(CurrentItemMetaData currentItemMetaData, VideoPlayerView newPlayerView, View listItemView);
+    void setCurrentItem(MetaData currentItemMetaData, VideoPlayerView newPlayerView);
 
     void setVideoPlayerState(VideoPlayerView videoPlayerView, PlayerMessageState playerMessageState);
 

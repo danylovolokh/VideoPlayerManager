@@ -242,6 +242,7 @@ public abstract class MediaPlayerWrapper
         if(positionUpdaterIsWorking()){
             stopPositionUpdateNotifier();
         }
+        if (SHOW_LOGS) Logger.v(TAG, "onErrorMainThread, mListener " + mListener);
 
         if (mListener != null) {
             mListener.onErrorMainThread(what, extra);

@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.volokh.danylo.video_player_manager.manager.VideoItem;
+import com.volokh.danylo.video_player_manager.meta.MetaData;
 import com.volokh.danylo.video_player_manager.ui.MediaPlayerWrapper;
 import com.volokh.danylo.video_player_manager.utils.Logger;
 import com.volokh.danylo.videolist.R;
@@ -25,9 +26,9 @@ public abstract class BaseVideoItem implements VideoItem {
      */
 
     private final Rect mCurrentViewRect = new Rect();
-    private final VideoPlayerManager mVideoPlayerManager;
+    private final VideoPlayerManager<MetaData> mVideoPlayerManager;
 
-    protected BaseVideoItem(VideoPlayerManager videoPlayerManager) {
+    protected BaseVideoItem(VideoPlayerManager<MetaData>  videoPlayerManager) {
         mVideoPlayerManager = videoPlayerManager;
     }
 
@@ -45,7 +46,7 @@ public abstract class BaseVideoItem implements VideoItem {
     @Override
     public void setActive(View newActiveView, int newActiveViewPosition) {
         VideoViewHolder viewHolder = (VideoViewHolder) newActiveView.getTag();
-        playNewVideo(new CurrentItemMetaData(newActiveViewPosition), viewHolder.mPlayer, mVideoPlayerManager, newActiveView);
+        playNewVideo(new CurrentItemMetaData(newActiveViewPosition, newActiveView), viewHolder.mPlayer, mVideoPlayerManager);
     }
 
     /**

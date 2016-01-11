@@ -371,6 +371,17 @@ public class VideoPlayerView extends ScalableTextureView
         }
     }
 
+    private void notifyOnErrorMainThread(int what, int extra) {
+        if (SHOW_LOGS) Logger.v(TAG, "notifyOnErrorMainThread");
+        List<MediaPlayerWrapper.MainThreadMediaPlayerListener> listCopy;
+        synchronized (mMediaPlayerMainThreadListeners){
+            listCopy = new ArrayList<>(mMediaPlayerMainThreadListeners);
+        }
+        for (MediaPlayerWrapper.MainThreadMediaPlayerListener listener : listCopy) {
+            listener.onErrorMainThread(what, extra);
+        }
+    }
+
     private final Runnable mVideoPreparedBackgroundThreadRunnable = new Runnable() {
         @Override
         public void run() {
@@ -400,6 +411,9 @@ public class VideoPlayerView extends ScalableTextureView
                 printErrorExtra(extra);
                 break;
         }
+
+        notifyOnErrorMainThread(what, extra);
+
         if (mMediaPlayerListenerBackgroundThread != null) {
             mViewHandlerBackgroundThread.post(new Runnable() {
                 @Override

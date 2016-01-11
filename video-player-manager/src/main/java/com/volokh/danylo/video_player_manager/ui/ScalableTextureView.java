@@ -13,7 +13,7 @@ import com.volokh.danylo.video_player_manager.utils.Logger;
  */
 public abstract class ScalableTextureView extends TextureView{
 
-    private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
+    private static final boolean SHOW_LOGS = false;
     private static final String TAG = ScalableTextureView.class.getSimpleName();
 
     private Integer mContentWidth;

@@ -4,12 +4,17 @@ import android.content.res.AssetFileDescriptor;
 import android.view.View;
 
 import com.squareup.picasso.Picasso;
+import com.volokh.danylo.video_player_manager.Config;
+import com.volokh.danylo.video_player_manager.meta.MetaData;
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
+import com.volokh.danylo.video_player_manager.utils.Logger;
 import com.volokh.danylo.videolist.video_list_demo.adapter.holders.VideoViewHolder;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
-import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
 
 public class AssetVideoItem extends BaseVideoItem{
+
+    private static final String TAG = AssetVideoItem.class.getSimpleName();
+    private static final boolean SHOW_LOGS = Config.SHOW_LOGS;
 
     private final AssetFileDescriptor mAssetFileDescriptor;
     private final String mTitle;
@@ -17,7 +22,7 @@ public class AssetVideoItem extends BaseVideoItem{
     private final Picasso mImageLoader;
     private final int mImageResource;
 
-    public AssetVideoItem(String title, AssetFileDescriptor assetFileDescriptor, VideoPlayerManager videoPlayerManager, Picasso imageLoader, int imageResource) {
+    public AssetVideoItem(String title, AssetFileDescriptor assetFileDescriptor, VideoPlayerManager<MetaData> videoPlayerManager, Picasso imageLoader, int imageResource) {
         super(videoPlayerManager);
         mTitle = title;
         mAssetFileDescriptor = assetFileDescriptor;
@@ -27,6 +32,8 @@ public class AssetVideoItem extends BaseVideoItem{
 
     @Override
     public void update(int position, final VideoViewHolder viewHolder, VideoPlayerManager videoPlayerManager) {
+        if(SHOW_LOGS) Logger.v(TAG, "update, position " + position);
+
         viewHolder.mTitle.setText(mTitle);
         viewHolder.mCover.setVisibility(View.VISIBLE);
         mImageLoader.load(mImageResource).into(viewHolder.mCover);
@@ -34,8 +41,8 @@ public class AssetVideoItem extends BaseVideoItem{
 
 
     @Override
-    public void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<CurrentItemMetaData> videoPlayerManager, View view) {
-        videoPlayerManager.playNewVideo(currentItemMetaData, player, mAssetFileDescriptor, view);
+    public void playNewVideo(MetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<MetaData> videoPlayerManager) {
+        videoPlayerManager.playNewVideo(currentItemMetaData, player, mAssetFileDescriptor);
     }
 
     @Override

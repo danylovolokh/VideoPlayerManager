@@ -3,10 +3,10 @@ package com.volokh.danylo.videolist.video_list_demo.adapter.items;
 import android.view.View;
 
 import com.squareup.picasso.Picasso;
+import com.volokh.danylo.video_player_manager.meta.MetaData;
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
 import com.volokh.danylo.videolist.video_list_demo.adapter.holders.VideoViewHolder;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
-import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
 
 /**
  * Use this class if you have direct path to the video source
@@ -36,8 +36,8 @@ public class DirectLinkVideoItem extends BaseVideoItem {
     }
 
     @Override
-    public void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager videoPlayerManager, View view) {
-        videoPlayerManager.playNewVideo(currentItemMetaData, player, mDirectUrl, view);
+    public void playNewVideo(MetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<MetaData> videoPlayerManager) {
+        videoPlayerManager.playNewVideo(currentItemMetaData, player, mDirectUrl);
     }
 
     @Override

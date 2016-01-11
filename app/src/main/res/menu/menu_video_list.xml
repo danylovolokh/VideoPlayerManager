@@ -12,5 +12,8 @@
         <item android:id="@+id/enable_visibility_utils_demo"
             android:title="Enable Visibility Utils Demo" />
 
+        <item android:id="@+id/enable_video_player_manager_demo"
+            android:title="Enable Video Player Manager Demo" />
+
     </group>
 </menu>

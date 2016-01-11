@@ -1,7 +1,6 @@
 package com.volokh.danylo.video_player_manager.manager;
 
-import android.view.View;
-
+import com.volokh.danylo.video_player_manager.meta.MetaData;
 import com.volokh.danylo.video_player_manager.ui.VideoPlayerView;
 import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
 import com.volokh.danylo.visibility_utils.items.ListItem;
@@ -11,6 +10,6 @@ import com.volokh.danylo.visibility_utils.items.ListItem;
  * or {@link android.support.v7.widget.RecyclerView}
  */
 public interface VideoItem extends ListItem {
-    void playNewVideo(CurrentItemMetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<CurrentItemMetaData> videoPlayerManager, View view);
+    void playNewVideo(MetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<MetaData> videoPlayerManager);
     void stopPlayback(VideoPlayerManager videoPlayerManager);
 }
