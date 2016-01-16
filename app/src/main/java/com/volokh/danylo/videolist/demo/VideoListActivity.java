@@ -29,11 +29,12 @@ public class VideoListActivity extends ActionBarActivity implements VisibilityUt
 
         // Set a ToolBar to replace the ActionBar.
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar.setTitle("Recycler View");
         setSupportActionBar(mToolbar);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.fragment_container, new VideoListFragment())
+                    .add(R.id.fragment_container, new VideoRecyclerViewFragment())
                     .commit();
         }
     }

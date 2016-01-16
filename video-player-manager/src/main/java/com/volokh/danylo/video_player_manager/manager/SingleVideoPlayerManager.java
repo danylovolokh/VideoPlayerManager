@@ -120,6 +120,8 @@ public class SingleVideoPlayerManager implements VideoPlayerManager<MetaData>, V
     @Override
     public void playNewVideo(MetaData currentItemMetaData, VideoPlayerView videoPlayerView, AssetFileDescriptor assetFileDescriptor) {
         if(SHOW_LOGS) Logger.v(TAG, ">> playNewVideo, videoPlayer " + videoPlayerView + ", mCurrentPlayer " + mCurrentPlayer + ", assetFileDescriptor " + assetFileDescriptor);
+        if(SHOW_LOGS) Logger.v(TAG, "playNewVideo, currentItemMetaData " + currentItemMetaData);
+
         /** 1. */
         mPlayerHandler.pauseQueueProcessing(TAG);
 

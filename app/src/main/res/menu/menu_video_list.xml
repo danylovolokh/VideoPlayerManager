@@ -3,10 +3,10 @@
     <group android:checkableBehavior="single">
 
         <item android:id="@+id/enable_list_view"
-            android:checked="true"
             android:title="Enable ListView" />
 
         <item android:id="@+id/enable_recycler_view"
+            android:checked="true"
             android:title="Enable RecyclerView" />
 
         <item android:id="@+id/enable_visibility_utils_demo"

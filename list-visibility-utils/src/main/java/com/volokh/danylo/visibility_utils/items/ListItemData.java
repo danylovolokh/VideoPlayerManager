@@ -51,4 +51,13 @@ public class ListItemData {
     public boolean isMostVisibleItemChanged() {
         return mIsMostVisibleItemChanged;
     }
+
+    @Override
+    public String toString() {
+        return "ListItemData{" +
+                "mIndexInAdapter=" + mIndexInAdapter +
+                ", mView=" + mView +
+                ", mIsMostVisibleItemChanged=" + mIsMostVisibleItemChanged +
+                '}';
+    }
 }

@@ -10,22 +10,21 @@ import com.volokh.danylo.visibility_utils.utils.Config;
 import com.volokh.danylo.visibility_utils.utils.Logger;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A utility that tracks current {@link ListItem} visibility.
- * Current ListItem is an item defined from outside by calling {@link ListItemsVisibilityCalculator#setCurrentItem(int, View)}.
+ * Current ListItem is an item defined by calling {@link #setCurrentItem(ListItemData)}.
  * Or it might be mock current item created in method {@link #getMockCurrentItem}
  *
- * The logic is following: when current view is going out of screen (up or down) by {@link #INACTIVE_LIST_ITEM_VISIBILITY_PERCENTS} or more then neighbour item become "active" by calling {@link Callback#onActivateNewCurrentItem}
+ * The logic is following: when current view is going out of screen (up or down) by {@link #INACTIVE_LIST_ITEM_VISIBILITY_PERCENTS} or more then neighbour item become "active" by calling {@link Callback#activateNewCurrentItem}
  * "Going out of screen" is calculated when {@link #onStateTouchScroll} is called from super class {@link BaseItemsVisibilityCalculator}
  *
  * Method {@link ListItemsVisibilityCalculator#onScrollStateIdle} should be called only when scroll state become idle. // TODO: test it
- * When it's called we look for new current item that eventually will be set as "active" by calling {@link ListItemsVisibilityCalculator#setCurrentItem(int, View)}
+ * When it's called we look for new current item that eventually will be set as "active" by calling {@link #setCurrentItem(ListItemData)}
  * Regarding the {@link #mScrollDirection} new current item is calculated from top to bottom (if DOWN) or from bottom to top (if UP).
  * The first(or last) visible item is set to current. It's visibility percentage is calculated. Then we are going though all visible items and find the one that is the most visible.
  *
- * Method {@link #onStateFling} is calling {@link Callback#onDeactivateCurrentItem}
+ * Method {@link #onStateFling} is calling {@link Callback#deactivateCurrentItem}
  *
  * @author danylo.volokh
  */
@@ -41,35 +40,61 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
 
     /** Initial scroll direction should be UP in order to set as active most top item if no active item yet*/
     private ScrollDirectionDetector.ScrollDirection mScrollDirection = ScrollDirectionDetector.ScrollDirection.UP;
-    private final AtomicReference<ListItemData> mCurrentItem = new AtomicReference<>();
+
+    /**
+     * The data of this member will be changing all the time
+     */
+    private final ListItemData mCurrentItem = new ListItemData();
 
     public SingleListViewItemActiveCalculator(Callback<ListItem> callback, List<? extends ListItem> listItems) {
         mCallback = callback;
         mListItems = listItems;
     }
 
+    /**
+     * Methods of this callback will be called when new active item is found {@link Callback#activateNewCurrentItem(ListItem, View, int)}
+     * or when there is no active item {@link Callback#deactivateCurrentItem(ListItem, View, int)} - this might happen when user scrolls really fast
+     */
     public interface Callback<T extends ListItem>{
-        void onActivateNewCurrentItem(T newListItem, View currentView, int position);
-        void onDeactivateCurrentItem(T listItemToDeactivate, View view, int position);
+        void activateNewCurrentItem(T newListItem, View currentView, int position);
+        void deactivateCurrentItem(T listItemToDeactivate, View view, int position);
     }
 
+    /**
+     * When Scrolling list is in this state we start calculating Active Item.
+     * Here we assume that scroll state was idle previously and {@link #mCurrentItem} already contains some data
+     *
+     * @param itemsPositionGetter
+     */
     @Override
     protected void onStateTouchScroll(ItemsPositionGetter itemsPositionGetter) {
         if(SHOW_LOGS) Logger.v(TAG, ">> onStateTouchScroll, mScrollDirection " + mScrollDirection);
 
-        ListItemData listItemData = mCurrentItem.get();
+        ListItemData listItemData = mCurrentItem;
+        if(SHOW_LOGS) Logger.v(TAG, "onStateTouchScroll, listItemData " + listItemData);
 
         calculateActiveItem(itemsPositionGetter, listItemData);
         if(SHOW_LOGS) Logger.v(TAG, "<< onStateTouchScroll, mScrollDirection " + mScrollDirection);
     }
 
-    private void findNextItem(ItemsPositionGetter itemsPositionGetter, ListItemData listItemData, ListItemData outNextItemData) {
+    /**
+     * This method calculates visibility of next item.
+     * There are some cases when next item cannot be filled with data:
+     *
+     * 1. When current data is last item in the list. In this case there is no next data
+     * 2. Index of current view cannot be calculated because view was already recycled
+     *
+     * @param itemsPositionGetter
+     * @param currentIem - the item that is active right now
+     * @param outNextItemData - out parameter. It will be filled with next item data if the one exists
+     */
+    private void findNextItem(ItemsPositionGetter itemsPositionGetter, ListItemData currentIem, ListItemData outNextItemData) {
         int nextItemVisibilityPercents = 0;
-        int nextItemIndex = listItemData.getIndex() + 1;
+        int nextItemIndex = currentIem.getIndex() + 1;
         if(SHOW_LOGS) Logger.v(TAG, "findNextItem, nextItemIndex " + nextItemIndex);
 
         if(nextItemIndex < mListItems.size()){
-            int indexOfCurrentView = itemsPositionGetter.indexOfChild(listItemData.getView());
+            int indexOfCurrentView = itemsPositionGetter.indexOfChild(currentIem.getView());
             if(SHOW_LOGS) Logger.v(TAG, "findNextItem, indexOfCurrentView " + indexOfCurrentView);
 
             if(indexOfCurrentView >= 0){
@@ -92,13 +117,24 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
         if(SHOW_LOGS) Logger.v(TAG, "findNextItem, nextItemVisibilityPercents " + nextItemVisibilityPercents);
     }
 
-    private void findPreviousItem(ItemsPositionGetter itemsPositionGetter, ListItemData listItemData, ListItemData outPreviousItemData) {
+    /**
+     * This method calculates visibility of previous item.
+     * There are some cases when previous item cannot be filled with data:
+     *
+     * 1. When current data is first item in the list. in this case there is no previous data
+     * 2. Index of current view cannot be calculated because view was already recycled
+     *
+     * @param itemsPositionGetter
+     * @param currentIem - the item that is active right now
+     * @param outPreviousItemData - out parameter. It will be filled with previous item data if the one exists
+     */
+    private void findPreviousItem(ItemsPositionGetter itemsPositionGetter, ListItemData currentIem, ListItemData outPreviousItemData) {
         int previousItemVisibilityPercents = 0;
-        int previousItemIndex = listItemData.getIndex() -1;
+        int previousItemIndex = currentIem.getIndex() -1;
         if(SHOW_LOGS) Logger.v(TAG, "findPreviousItem, previousItemIndex " + previousItemIndex);
 
         if(previousItemIndex >= 0){
-            int indexOfCurrentView = itemsPositionGetter.indexOfChild(listItemData.getView());
+            int indexOfCurrentView = itemsPositionGetter.indexOfChild(currentIem.getView());
             if(SHOW_LOGS) Logger.v(TAG, "findPreviousItem, indexOfCurrentView " + indexOfCurrentView);
 
             if(indexOfCurrentView > 0){
@@ -123,6 +159,13 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
         calculateMostVisibleItem(itemsPositionGetter, firstVisiblePosition, lastVisiblePosition);
     }
 
+    /**
+     * This method calculates most visible item from top to bottom or from bottom to top depends on scroll direction.
+     *
+     * @param itemsPositionGetter
+     * @param firstVisiblePosition
+     * @param lastVisiblePosition
+     */
     private void calculateMostVisibleItem(ItemsPositionGetter itemsPositionGetter, int firstVisiblePosition, int lastVisiblePosition) {
 
         ListItemData mostVisibleItem = getMockCurrentItem(itemsPositionGetter, firstVisiblePosition, lastVisiblePosition);
@@ -143,7 +186,7 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
         if(mostVisibleItem.isMostVisibleItemChanged()){
             if(SHOW_LOGS) Logger.v(TAG, "topToBottomMostVisibleItem, item changed");
 
-            mCallback.onActivateNewCurrentItem(mListItems.get(mostVisibleItem.getIndex()), mostVisibleItem.getView(), mostVisibleItem.getIndex());
+            setCurrentItem(mostVisibleItem);
         } else {
             if(SHOW_LOGS) Logger.v(TAG, "topToBottomMostVisibleItem, item not changed");
 
@@ -174,7 +217,7 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
             }
         }
 
-        View currentItemView = mCurrentItem.get() != null ? mCurrentItem.get().getView() : null;
+        View currentItemView = mCurrentItem.getView();
         View mostVisibleView = outMostVisibleItem.getView();
 
         // set if newly found most visible view is different from previous most visible view
@@ -205,7 +248,7 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
                 outMostVisibleItem.fillWithData(indexOfCurrentItem, currentView);
             }
 
-            View currentItemView = mCurrentItem.get() != null ? mCurrentItem.get().getView() : null;
+            View currentItemView = mCurrentItem.getView();
             View mostVisibleView = outMostVisibleItem.getView();
 
             // set if newly found most visible view is different from previous most visible view
@@ -248,10 +291,25 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
         return mockCurrentItemData;
     }
 
+    /**
+     * 1. This method get current item visibility percents.
+     *
+     * 2. Then get scroll direction and depending on it either call {@link #findNextItem(ItemsPositionGetter, ListItemData, ListItemData)}
+     * or {@link #findPreviousItem(ItemsPositionGetter, ListItemData, ListItemData)}
+     *
+     * 3. Then it checks if current item visibility percents is enough for deactivating it.
+     * If it's enough it checks if new active item was found.
+     *
+     * 4. If all conditions match it calls {@link #setCurrentItem(ListItemData)}
+     * @param itemsPositionGetter
+     * @param listItemData
+     */
     private void calculateActiveItem(ItemsPositionGetter itemsPositionGetter, ListItemData listItemData) {
+        /** 1. */
         int currentItemVisibilityPercents = listItemData.getVisibilityPercents(mListItems);
         if(SHOW_LOGS) Logger.v(TAG, "calculateActiveItem, mScrollDirection " + mScrollDirection);
 
+        /** 2. */
         ListItemData neighbourItemData = new ListItemData();
         switch (mScrollDirection){
             case UP:
@@ -263,12 +321,12 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
         }
         if(SHOW_LOGS) Logger.v(TAG, "calculateActiveItem, currentItemVisibilityPercents " + currentItemVisibilityPercents);
 
+        /** 3. */
         if(enoughPercentsForDeactivation(currentItemVisibilityPercents) && neighbourItemData.isAvailable()){
 
-            mCallback.onActivateNewCurrentItem(
-                    mListItems.get(neighbourItemData.getIndex())
-                    , neighbourItemData.getView()
-                    , neighbourItemData.getIndex());
+            // neighbour item become active (current)
+            /** 4. */
+            setCurrentItem(neighbourItemData);
         }
     }
 
@@ -280,8 +338,8 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
 
     @Override
     protected void onStateFling(ItemsPositionGetter itemsPositionGetter) {
-        ListItemData currentItemData = mCurrentItem.get();
-        mCallback.onDeactivateCurrentItem(mListItems.get(currentItemData.getIndex()), currentItemData.getView(), currentItemData.getIndex());
+        ListItemData currentItemData = mCurrentItem;
+        mCallback.deactivateCurrentItem(mListItems.get(currentItemData.getIndex()), currentItemData.getView(), currentItemData.getIndex());
     }
 
     @Override
@@ -290,12 +348,17 @@ public class SingleListViewItemActiveCalculator extends BaseItemsVisibilityCalcu
         mScrollDirection = scrollDirection;
     }
 
-    @Override
-    public void setCurrentItem(int itemPosition, View listItemView) {
-        if(SHOW_LOGS) Logger.v(TAG, ">> setCurrentItem, itemPosition " + itemPosition);
-        synchronized (mCurrentItem){
-            mCurrentItem.set(new ListItemData().fillWithData(itemPosition, listItemView));
-        }
-        if(SHOW_LOGS) Logger.v(TAG, "<< setCurrentItem");
+    private void setCurrentItem(ListItemData newCurrentItem) {
+        if(SHOW_LOGS) Logger.v(TAG, "setCurrentItem, newCurrentItem " + newCurrentItem);
+
+        int itemPosition = newCurrentItem.getIndex();
+        View view = newCurrentItem.getView();
+
+        mCurrentItem.fillWithData(itemPosition, view);
+
+        mCallback.activateNewCurrentItem(
+                mListItems.get(itemPosition)
+                , view
+                , itemPosition);
     }
 }

@@ -51,15 +51,7 @@ public class VisibilityUtilsFragment extends Fragment implements VisibilityItem.
             new VisibilityItem("10", this)));
 
     private final ListItemsVisibilityCalculator mListItemVisibilityCalculator =
-            new SingleListViewItemActiveCalculator(new DefaultSingleItemCalculatorCallback(){
-
-                @Override
-                public void onActivateNewCurrentItem(ListItem newListItem, View newView, int newViewPosition) {
-                    super.onActivateNewCurrentItem(newListItem, newView, newViewPosition);
-                    mListItemVisibilityCalculator.setCurrentItem(newViewPosition, newView);
-
-                }
-            }, mList);
+            new SingleListViewItemActiveCalculator(new DefaultSingleItemCalculatorCallback(), mList);
 
     private ItemsPositionGetter mItemsPositionGetter;
 

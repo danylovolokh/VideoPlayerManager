@@ -1,7 +1,5 @@
 package com.volokh.danylo.visibility_utils.calculator;
 
-import android.view.View;
-
 import com.volokh.danylo.visibility_utils.scroll_utils.ItemsPositionGetter;
 
 /**
@@ -11,5 +9,4 @@ import com.volokh.danylo.visibility_utils.scroll_utils.ItemsPositionGetter;
 public interface ListItemsVisibilityCalculator {
     void onScrollStateIdle(ItemsPositionGetter itemsPositionGetter, int firstVisiblePosition, int lastVisiblePosition);
     void onScroll(ItemsPositionGetter itemsPositionGetter, int firstVisibleItem, int visibleItemCount, int scrollState);
-    void setCurrentItem(int itemPosition, View listItemView);
 }

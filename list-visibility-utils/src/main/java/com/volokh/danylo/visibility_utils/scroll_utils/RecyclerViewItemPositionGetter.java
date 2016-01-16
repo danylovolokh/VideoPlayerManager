@@ -8,6 +8,8 @@ import com.volokh.danylo.visibility_utils.utils.Config;
 import com.volokh.danylo.visibility_utils.utils.Logger;
 
 /**
+ * This class is an API for {@link com.volokh.danylo.visibility_utils.calculator.ListItemsVisibilityCalculator}
+ * Using this class is can access all the data from RecyclerView
  * Created by danylo.volokh on 06.01.2016.
  */
 public class RecyclerViewItemPositionGetter implements ItemsPositionGetter {

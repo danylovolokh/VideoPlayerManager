@@ -10,7 +10,6 @@ import android.widget.ListView;
 
 import com.volokh.danylo.video_player_manager.Config;
 import com.volokh.danylo.video_player_manager.manager.PlayerItemChangeListener;
-import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
 import com.volokh.danylo.video_player_manager.manager.SingleVideoPlayerManager;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
 import com.volokh.danylo.video_player_manager.meta.MetaData;
@@ -23,6 +22,7 @@ import com.volokh.danylo.visibility_utils.calculator.DefaultSingleItemCalculator
 import com.volokh.danylo.visibility_utils.calculator.ListItemsVisibilityCalculator;
 import com.volokh.danylo.visibility_utils.calculator.SingleListViewItemActiveCalculator;
 import com.volokh.danylo.visibility_utils.scroll_utils.ItemsPositionGetter;
+import com.volokh.danylo.visibility_utils.scroll_utils.ListViewItemPositionGetter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,32 +47,7 @@ public class VideoListFragment extends Fragment {
      * ItemsPositionGetter is used by {@link ListItemsVisibilityCalculator} for getting information about
      * items position in the ListView
      */
-    private final ItemsPositionGetter mItemsPositionGetter = new ItemsPositionGetter() {
-        @Override
-        public View getChildAt(int position) {
-            return mListView.getChildAt(position);
-        }
-
-        @Override
-        public int indexOfChild(View view) {
-            return mListView.indexOfChild(view);
-        }
-
-        @Override
-        public int getChildCount() {
-            return mListView.getChildCount();
-        }
-
-        @Override
-        public int getLastVisiblePosition() {
-            return mListView.getLastVisiblePosition();
-        }
-
-        @Override
-        public int getFirstVisiblePosition() {
-            return mListView.getFirstVisiblePosition();
-        }
-    };
+    private ItemsPositionGetter mItemsPositionGetter;
 
     /**
      * Here we use {@link SingleVideoPlayerManager}, which means that only one video playback is possible.
@@ -81,8 +56,7 @@ public class VideoListFragment extends Fragment {
         @Override
         public void onPlayerItemChanged(MetaData metaData) {
             if(SHOW_LOGS) Logger.v(TAG, "onPlayerItemChanged " + metaData);
-            CurrentItemMetaData currentItemMetaData = (CurrentItemMetaData)metaData;
-            mListItemVisibilityCalculator.setCurrentItem(currentItemMetaData.positionOfCurrentItem, currentItemMetaData.currentItemView);
+
         }
     });
 
@@ -118,28 +92,28 @@ public class VideoListFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_video_list_view, container, false);
 
         mListView = (ListView) rootView.findViewById(R.id.list_view);
-        VideoListViewAdapter mVideoListViewAdapter = new VideoListViewAdapter(mVideoPlayerManager, getActivity(), mList);
-        mListView.setAdapter(mVideoListViewAdapter);
+        VideoListViewAdapter videoListViewAdapter = new VideoListViewAdapter(mVideoPlayerManager, getActivity(), mList);
+        mListView.setAdapter(videoListViewAdapter);
         mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
                 mScrollState = scrollState;
-                if(scrollState == SCROLL_STATE_IDLE && !mList.isEmpty()){
+                if (scrollState == SCROLL_STATE_IDLE && !mList.isEmpty()) {
                     mListItemVisibilityCalculator.onScrollStateIdle(mItemsPositionGetter, view.getFirstVisiblePosition(), view.getLastVisiblePosition());
                 }
             }
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if(!mList.isEmpty()){
+                if (!mList.isEmpty()) {
                     // on each scroll event we need to call onScroll for mListItemVisibilityCalculator
                     // in order to recalculate the items visibility
                     mListItemVisibilityCalculator.onScroll(mItemsPositionGetter, firstVisibleItem, visibleItemCount, mScrollState);
                 }
             }
         });
-        mVideoListViewAdapter.notifyDataSetChanged();
-
+        videoListViewAdapter.notifyDataSetChanged();
+        mItemsPositionGetter = new ListViewItemPositionGetter(mListView);
         return rootView;
     }
 

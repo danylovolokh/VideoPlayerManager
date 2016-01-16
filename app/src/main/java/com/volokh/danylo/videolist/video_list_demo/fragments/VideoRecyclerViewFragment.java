@@ -60,8 +60,7 @@ public class VideoRecyclerViewFragment extends Fragment {
     private final VideoPlayerManager<MetaData> mVideoPlayerManager = new SingleVideoPlayerManager(new PlayerItemChangeListener() {
         @Override
         public void onPlayerItemChanged(MetaData metaData) {
-            CurrentItemMetaData currentItemMetaData = (CurrentItemMetaData)metaData;
-            mVideoVisibilityCalculator.setCurrentItem(currentItemMetaData.positionOfCurrentItem, currentItemMetaData.currentItemView);
+
         }
     });
 
