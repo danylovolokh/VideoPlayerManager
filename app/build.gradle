@@ -36,4 +36,5 @@ dependencies {
     compile 'com.squareup.picasso:picasso:2.5.2'
 
     compile project(':video-player-manager')
+    compile project(':list-visibility-utils')
 }

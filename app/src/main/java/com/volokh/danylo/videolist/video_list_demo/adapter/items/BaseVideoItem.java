@@ -14,8 +14,9 @@ import com.volokh.danylo.videolist.R;
 import com.volokh.danylo.videolist.video_list_demo.adapter.holders.VideoViewHolder;
 import com.volokh.danylo.video_player_manager.manager.VideoPlayerManager;
 import com.volokh.danylo.video_player_manager.meta.CurrentItemMetaData;
+import com.volokh.danylo.visibility_utils.items.ListItem;
 
-public abstract class BaseVideoItem implements VideoItem {
+public abstract class BaseVideoItem implements VideoItem, ListItem{
 
     private static final boolean SHOW_LOGS = false;
     private static final String TAG = BaseVideoItem.class.getSimpleName();
