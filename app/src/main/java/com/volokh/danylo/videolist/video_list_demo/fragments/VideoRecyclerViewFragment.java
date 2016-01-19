@@ -103,7 +103,7 @@ public class VideoRecyclerViewFragment extends Fragment {
         VideoRecyclerViewAdapter videoRecyclerViewAdapter = new VideoRecyclerViewAdapter(mVideoPlayerManager, getActivity(), mList);
 
         mRecyclerView.setAdapter(videoRecyclerViewAdapter);
-        mRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int scrollState) {
@@ -129,8 +129,6 @@ public class VideoRecyclerViewFragment extends Fragment {
             }
         });
         mItemsPositionGetter = new RecyclerViewItemPositionGetter(mLayoutManager, mRecyclerView);
-
-        videoRecyclerViewAdapter.notifyDataSetChanged();
 
         return rootView;
     }

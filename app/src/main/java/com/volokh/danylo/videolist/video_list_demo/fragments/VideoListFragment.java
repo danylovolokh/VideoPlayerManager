@@ -94,6 +94,13 @@ public class VideoListFragment extends Fragment {
         mListView = (ListView) rootView.findViewById(R.id.list_view);
         VideoListViewAdapter videoListViewAdapter = new VideoListViewAdapter(mVideoPlayerManager, getActivity(), mList);
         mListView.setAdapter(videoListViewAdapter);
+
+        mItemsPositionGetter = new ListViewItemPositionGetter(mListView);
+        /**
+         * We need to set onScrollListener after we create {@link #mItemsPositionGetter}
+         * because {@link android.widget.AbsListView.OnScrollListener#onScroll(AbsListView, int, int, int)}
+         * is called immediately and we will get {@link NullPointerException}
+         */
         mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -112,8 +119,7 @@ public class VideoListFragment extends Fragment {
                 }
             }
         });
-        videoListViewAdapter.notifyDataSetChanged();
-        mItemsPositionGetter = new ListViewItemPositionGetter(mListView);
+
         return rootView;
     }
 
