@@ -244,7 +244,120 @@ dependencies {
 }
 ```
 
-TODO: define
+Here is the relevant code combanation of two libraries fro implementing Video Playback in scrolling list.
+```
+// Code of your acitivty
+    /**
+     * Only the one (most visible) view should be active (and playing).
+     * To calculate visibility of views we use {@link SingleListViewItemActiveCalculator}
+     */
+    private final ListItemsVisibilityCalculator mVideoVisibilityCalculator =
+            new SingleListViewItemActiveCalculator(new DefaultSingleItemCalculatorCallback(), mList);
+
+    /**
+     * ItemsPositionGetter is used by {@link ListItemsVisibilityCalculator} for getting information about
+     * items position in the RecyclerView and LayoutManager
+     */
+    private ItemsPositionGetter mItemsPositionGetter;
+
+    /**
+     * Here we use {@link SingleVideoPlayerManager}, which means that only one video playback is possible.
+     */
+    private final VideoPlayerManager<MetaData> mVideoPlayerManager = new SingleVideoPlayerManager(new PlayerItemChangeListener() {
+        @Override
+        public void onPlayerItemChanged(MetaData metaData) {
+
+        }
+    });
+
+    private int mScrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
+    
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+	// fill the list of items with an items
+
+	// some initialization code here
+
+        VideoRecyclerViewAdapter videoRecyclerViewAdapter = new VideoRecyclerViewAdapter(mVideoPlayerManager, getActivity(), mList);
+
+        mRecyclerView.setAdapter(videoRecyclerViewAdapter);
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int scrollState) {
+                mScrollState = scrollState;
+                if(scrollState == RecyclerView.SCROLL_STATE_IDLE && !mList.isEmpty()){
+
+                    mVideoVisibilityCalculator.onScrollStateIdle(
+                            mItemsPositionGetter,
+                            mLayoutManager.findFirstVisibleItemPosition(),
+                            mLayoutManager.findLastVisibleItemPosition());
+                }
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if(!mList.isEmpty()){
+                    mVideoVisibilityCalculator.onScroll(
+                            mItemsPositionGetter,
+                            mLayoutManager.findFirstVisibleItemPosition(),
+                            mLayoutManager.findLastVisibleItemPosition() - mLayoutManager.findFirstVisibleItemPosition() + 1,
+                            mScrollState);
+                }
+            }
+        });
+        mItemsPositionGetter = new RecyclerViewItemPositionGetter(mLayoutManager, mRecyclerView);
+
+        return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(!mList.isEmpty()){
+            // need to call this method from list view handler in order to have filled list
+
+            mRecyclerView.post(new Runnable() {
+                @Override
+                public void run() {
+
+                    mVideoVisibilityCalculator.onScrollStateIdle(
+                            mItemsPositionGetter,
+                            mLayoutManager.findFirstVisibleItemPosition(),
+                            mLayoutManager.findLastVisibleItemPosition());
+
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        // we have to stop any playback in onStop
+        mVideoPlayerManager.resetMediaPlayer();
+    }    
+```
+When visibility utils calls method "setActive" on your implementation of ListItem you have to call "playNewVideo".
+Please find the working code on this Demo application.
+```
+    /**
+     * When this item becomes active we start playback on the video in this item
+     */
+    @Override
+    public void setActive(View newActiveView, int newActiveViewPosition) {
+        VideoViewHolder viewHolder = (VideoViewHolder) newActiveView.getTag();
+        playNewVideo(new CurrentItemMetaData(newActiveViewPosition, newActiveView), viewHolder.mPlayer, mVideoPlayerManager);
+    }
+    
+    @Override
+    public void playNewVideo(MetaData currentItemMetaData, VideoPlayerView player, VideoPlayerManager<MetaData> videoPlayerManager) {
+        videoPlayerManager.playNewVideo(currentItemMetaData, player, mDirectUrl);
+    }
+```
+
 # Demo of usage in scrolling list (ListView, RecyclerView)
 ![recycler_view_demo](https://cloud.githubusercontent.com/assets/2686355/12434342/d4d53570-bf0e-11e5-9c4c-d7d701ca9d5f.gif) ![list_view_demo](https://cloud.githubusercontent.com/assets/2686355/12434566/318f5a10-bf10-11e5-96b5-3060c36b0a00.gif)
 
