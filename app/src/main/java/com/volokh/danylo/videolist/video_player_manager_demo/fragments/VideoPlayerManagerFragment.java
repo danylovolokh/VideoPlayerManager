@@ -59,16 +59,19 @@ public class VideoPlayerManagerFragment extends Fragment implements View.OnClick
         mVideoPlayer_1.addMediaPlayerListener(new SimpleMainThreadMediaPlayerListener(){
             @Override
             public void onVideoPreparedMainThread() {
+                // We hide the cover when video is prepared. Playback is about to start
                 mVideoCover.setVisibility(View.INVISIBLE);
             }
 
             @Override
             public void onVideoStoppedMainThread() {
+                // We show the cover when video is stopped
                 mVideoCover.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onVideoCompletionMainThread() {
+                // We show the cover when video is completed
                 mVideoCover.setVisibility(View.VISIBLE);
             }
         });
@@ -79,16 +82,19 @@ public class VideoPlayerManagerFragment extends Fragment implements View.OnClick
         mVideoPlayer_2.addMediaPlayerListener(new SimpleMainThreadMediaPlayerListener(){
             @Override
             public void onVideoPreparedMainThread() {
+                // We hide the cover when video is prepared. Playback is about to start
                 mVideoCover2.setVisibility(View.INVISIBLE);
             }
 
             @Override
             public void onVideoStoppedMainThread() {
+                // We show the cover when video is stopped
                 mVideoCover2.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onVideoCompletionMainThread() {
+                // We show the cover when video is completed
                 mVideoCover2.setVisibility(View.VISIBLE);
             }
         });

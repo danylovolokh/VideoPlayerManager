@@ -234,12 +234,14 @@ public class VideoPlayerView extends ScalableTextureView
     }
 
     private void initView() {
-        TAG = "" + this;
+        if(!isInEditMode()){
+            TAG = "" + this;
 
-        if (SHOW_LOGS) Logger.v(TAG, "initView");
+            if (SHOW_LOGS) Logger.v(TAG, "initView");
 
-        setScaleType(ScalableTextureView.ScaleType.CENTER_CROP);
-        super.setSurfaceTextureListener(this);
+            setScaleType(ScalableTextureView.ScaleType.CENTER_CROP);
+            super.setSurfaceTextureListener(this);
+        }
     }
 
     @Override
@@ -636,36 +638,49 @@ public class VideoPlayerView extends ScalableTextureView
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        if (SHOW_LOGS) Logger.v(TAG, ">> onAttachedToWindow");
-        mViewHandlerBackgroundThread = new HandlerThreadExtension(TAG, false);
-        mViewHandlerBackgroundThread.startThread();
+        boolean isInEditMode = isInEditMode();
+        if (SHOW_LOGS) Logger.v(TAG, ">> onAttachedToWindow " + isInEditMode);
+        if(!isInEditMode){
+            mViewHandlerBackgroundThread = new HandlerThreadExtension(TAG, false);
+            mViewHandlerBackgroundThread.startThread();
+        }
+
         if (SHOW_LOGS) Logger.v(TAG, "<< onAttachedToWindow");
     }
 
     @Override
     protected void onDetachedFromWindow(){
         super.onDetachedFromWindow();
-        if (SHOW_LOGS) Logger.v(TAG, ">> onDetachedFromWindow");
-        mViewHandlerBackgroundThread.postQuit();
-        mViewHandlerBackgroundThread = null;
+        boolean isInEditMode = isInEditMode();
+
+        if (SHOW_LOGS) Logger.v(TAG, ">> onDetachedFromWindow, isInEditMode " + isInEditMode);
+        if(!isInEditMode){
+            mViewHandlerBackgroundThread.postQuit();
+            mViewHandlerBackgroundThread = null;
+        }
         if (SHOW_LOGS) Logger.v(TAG, "<< onDetachedFromWindow");
     }
 
     @Override
     protected void onVisibilityChanged(View changedView, int visibility) {
         super.onVisibilityChanged(changedView, visibility);
-        if (SHOW_LOGS) Logger.v(TAG, ">> onVisibilityChanged " + visibilityStr(visibility));
+        boolean isInEditMode = isInEditMode();
 
-        switch (visibility){
-            case VISIBLE:
-                break;
-            case INVISIBLE:
-            case GONE:
-                synchronized (mReadyForPlaybackIndicator){
-                    // have to notify worker thread in case we exited this screen without getting ready for playback
-                    mReadyForPlaybackIndicator.notifyAll();
-                }
+        if (SHOW_LOGS) Logger.v(TAG, ">> onVisibilityChanged " + visibilityStr(visibility) + ", isInEditMode " + isInEditMode);
+        if (!isInEditMode) {
+
+            switch (visibility){
+                case VISIBLE:
+                    break;
+                case INVISIBLE:
+                case GONE:
+                    synchronized (mReadyForPlaybackIndicator){
+                        // have to notify worker thread in case we exited this screen without getting ready for playback
+                        mReadyForPlaybackIndicator.notifyAll();
+                    }
+            }
         }
+
         if (SHOW_LOGS) Logger.v(TAG, "<< onVisibilityChanged");
     }
 
