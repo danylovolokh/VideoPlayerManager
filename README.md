@@ -33,7 +33,7 @@ buildscript {
 # Usage of Video-Player-Manager
 ```
 dependencies {
-    compile 'com.github.danylovolokh:video-player-manager:0.1.0'
+    compile 'com.github.danylovolokh:video-player-manager:0.2.0'
 }
 ```
 Put multiple VideoPlayerViews into your xml file.
@@ -154,7 +154,11 @@ public void onClick(View v) {
 ![video_player_manager_demo](https://cloud.githubusercontent.com/assets/2686355/12434458/6f677ae4-bf0f-11e5-8fa9-b3d3b8a30165.gif)
 
 # Usage of List-Visibility-Utils
-
+```
+dependencies {
+    compile 'com.github.danylovolokh:list-visibility-utils:0.2.0'
+}
+```
 The models of your adapter need to implement ListItem
 
 ```
@@ -239,8 +243,8 @@ Add this snippet to your module build.gradle file:
 
 ```
 dependencies {
-    compile 'com.github.danylovolokh:video-player-manager:0.1.0'
-	compile 'com.github.danylovolokh:list-visibility-utils:0.1.0'
+    compile 'com.github.danylovolokh:video-player-manager:0.2.0'
+    compile 'com.github.danylovolokh:list-visibility-utils:0.2.0'
 }
 ```
 
