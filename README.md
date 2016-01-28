@@ -20,6 +20,8 @@ These two libraries combined are the tool to get a Video Playback in the scrolli
 
 [![Android_weekly](https://img.shields.io/badge/Android%20Weekly-%09Implementing%20video%20playback%20in%20a%20scrolled%20list-green.svg)](http://androidweekly.net/issues/issue-189)
 
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-VideoPlayerManager-green.svg?style=true)](https://android-arsenal.com/details/1/3073)
+
 
 # Problems with video list
 1. We cannot use usual VideoView in the list. VideoView extends SurfaceView, and SurfaceView doesn't have UI synchronization buffers. All this will lead us to the situation where video that is playing is trying to catch up the list when you scroll it. Synchronization buffers are present in TextureView but there is no VideoView that is based on TextureView in Android SDK version 15. So we need a view that extends TextureView and works with Android MediaPlayer.
