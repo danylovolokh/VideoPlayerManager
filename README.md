@@ -374,6 +374,9 @@ Please find the working code on this Demo application.
 # Demo of usage in scrolling list (ListView, RecyclerView)
 ![recycler_view_demo](https://cloud.githubusercontent.com/assets/2686355/12434342/d4d53570-bf0e-11e5-9c4c-d7d701ca9d5f.gif) ![list_view_demo](https://cloud.githubusercontent.com/assets/2686355/12434566/318f5a10-bf10-11e5-96b5-3060c36b0a00.gif)
 
+# AndroidX support
+Migration to AndroidX gladly provided by https://github.com/prensmiskin
+
 # License
 
 Copyright 2015 Danylo Volokh
