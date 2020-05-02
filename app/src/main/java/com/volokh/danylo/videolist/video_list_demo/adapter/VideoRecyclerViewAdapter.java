@@ -1,7 +1,7 @@
 package com.volokh.danylo.videolist.video_list_demo.adapter;
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 

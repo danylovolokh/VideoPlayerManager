@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 28
     buildToolsVersion "21.1.2"
 
     packagingOptions { //specify exclude because these files are duplicated in different libraries
@@ -29,10 +29,10 @@ android {
 dependencies {
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:23.0.1'
-    compile 'com.android.support:cardview-v7:23.0.1'
-    compile 'com.android.support:recyclerview-v7:23.0.1'
-    compile 'com.android.support:design:23.0.1'
+    compile 'androidx.appcompat:appcompat:1.0.0'
+    compile 'androidx.cardview:cardview:1.0.0'
+    compile 'androidx.recyclerview:recyclerview:1.0.0'
+    compile 'com.google.android.material:material:1.0.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
 
     compile project(':video-player-manager')
