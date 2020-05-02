@@ -1,10 +1,10 @@
 package com.volokh.danylo.videolist.demo;
 
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.volokh.danylo.videolist.R;
 import com.volokh.danylo.videolist.video_list_demo.fragments.VideoListFragment;
@@ -17,20 +17,13 @@ import com.volokh.danylo.videolist.visibility_demo.fragments.VisibilityUtilsFrag
  * 1. {@link VideoRecyclerViewFragment}
  * 2. {@link VideoListFragment}
  */
-public class VideoListActivity extends ActionBarActivity implements VisibilityUtilsFragment.VisibilityUtilsCallback {
-
-    private Toolbar mToolbar;
+public class VideoListActivity extends AppCompatActivity implements VisibilityUtilsFragment.VisibilityUtilsCallback {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_video_list);
-
-        // Set a ToolBar to replace the ActionBar.
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mToolbar.setTitle("Recycler View");
-        setSupportActionBar(mToolbar);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
@@ -79,32 +72,28 @@ public class VideoListActivity extends ActionBarActivity implements VisibilityUt
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, new VideoPlayerManagerFragment())
                 .commit();
-        mToolbar.setTitle("Press on photo to start playback");
     }
 
     private void addVisibilityUtilsFragment() {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, new VisibilityUtilsFragment())
                 .commit();
-        mToolbar.setTitle("Visibility Utils Demo");
     }
 
     private void addRecyclerView() {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, new VideoRecyclerViewFragment())
                 .commit();
-        mToolbar.setTitle("Recycler View");
     }
 
     private void addListView() {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, new VideoListFragment())
                 .commit();
-        mToolbar.setTitle("List View");
     }
 
     @Override
     public void setTitle(String title) {
-        mToolbar.setTitle(title);
+
     }
 }

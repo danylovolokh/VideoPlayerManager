@@ -1,7 +1,7 @@
 package com.volokh.danylo.videolist.video_list_demo.adapter.items;
 
 import android.graphics.Rect;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,7 +37,7 @@ public abstract class BaseVideoItem implements VideoItem, ListItem{
      * This method needs to be called when created/recycled view is updated.
      * Call it in
      * 1. {@link android.widget.ListAdapter#getView(int, View, ViewGroup)}
-     * 2. {@link android.support.v7.widget.RecyclerView.Adapter#onBindViewHolder(RecyclerView.ViewHolder, int)}
+     * 2. {@link androidx.recyclerview.widget.RecyclerView.Adapter#onBindViewHolder(RecyclerView.ViewHolder, int)}
      */
     public abstract void update(int position, VideoViewHolder view, VideoPlayerManager videoPlayerManager);
 
